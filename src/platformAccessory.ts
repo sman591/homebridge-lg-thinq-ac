@@ -143,6 +143,10 @@ export class ExamplePlatformAccessory {
     if (powerState === this.cachedState.power) {
       // The air conditioner will make a sound every time this API is called.
       // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
+      this.platform.log.debug(
+        'Power state equals cached state. Skipping.',
+        powerState,
+      )
       callback(null)
       return
     }
