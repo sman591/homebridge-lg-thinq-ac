@@ -1,3 +1,4 @@
+import { readFileSync, writeFileSync } from 'fs'
 import { APIEvent } from 'homebridge'
 import type {
   API,
@@ -9,7 +10,8 @@ import type {
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings'
 import { ExamplePlatformAccessory } from './platformAccessory'
-import { getDashboard } from './thinq/api'
+import ThinqApi from './thinq/api'
+import ThinqAuth from './thinq/auth'
 
 /**
  * HomebridgePlatform
@@ -23,12 +25,25 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = []
 
+  public readonly thinqAuth: ThinqAuth
+  public readonly thinqApi: ThinqApi
+
   constructor(
     public readonly log: Logger,
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
+    this.thinqAuth = new ThinqAuth(
+      log,
+      this.config.auth_login_state,
+      this.config.auth_access_token,
+      this.config.auth_refresh_token,
+      this.config.auth_user_number,
+    )
+    this.thinqApi = new ThinqApi(this.thinqAuth)
     this.log.debug('Finished initializing platform:', this.config.name)
+
+    this.inititializeAuth()
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
@@ -38,7 +53,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       log.debug('Executed didFinishLaunching callback')
       // run the method to discover / register your devices as accessories
       this.discoverDevices().catch((error) =>
-        log.error('Error discovering devices', error),
+        log.error('Error discovering devices', error.toString()),
       )
     })
   }
@@ -58,17 +73,35 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory)
   }
 
+  async inititializeAuth() {
+    this.updateAndReplaceConfig()
+    const redirectedUrl = this.config.auth_redirected_url as unknown
+    if (typeof redirectedUrl === 'string' && redirectedUrl !== '') {
+      try {
+        await this.thinqAuth.processLoginResult(redirectedUrl)
+        this.updateAndReplaceConfig()
+      } catch (error) {
+        this.log.error('Error setting refresh token', error)
+      }
+    } else {
+      this.log.debug(
+        'Redirected URL not stored in config; skipping initializeAuth()',
+      )
+    }
+  }
+
   /**
    * This is an example method showing how to register discovered accessories.
    * Accessories must only be registered once, previously created accessories
    * must not be registered again to prevent "duplicate UUID" errors.
    */
   async discoverDevices() {
-    // EXAMPLE ONLY
-    // A real plugin you would discover accessories from the local network, cloud services
-    // or a user-defined array in the platform config.
+    if (!this.thinqAuth.getIsLoggedIn()) {
+      this.log.debug('Not logged in; skipping discoverDevices()')
+      return
+    }
 
-    const dashboardResponse = await getDashboard()
+    const dashboardResponse = await this.thinqApi.getDashboard()
 
     this.log.debug('dashboardResponse', dashboardResponse)
 
@@ -127,5 +160,33 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       this.log.error('Failed to parse refresh_interval from config', error)
     }
     return fallbackDefault
+  }
+
+  updateAndReplaceConfig() {
+    const configPath = this.api.user.configPath()
+    const configString = readFileSync(configPath).toString()
+    try {
+      const config = JSON.parse(configString)
+      this.log.debug(config)
+      const platforms = config.platforms.filter(
+        (platform: Record<string, string>) =>
+          platform.platform === 'LgThinqAirConditioner',
+      )
+      for (const platform of platforms) {
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        platform.auth_login_url = this.thinqAuth.getLoginUri()
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        platform.auth_login_state = this.thinqAuth.authState
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        platform.auth_access_token = this.thinqAuth.accessToken
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        platform.auth_refresh_token = this.thinqAuth.refreshToken
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        platform.auth_user_number = this.thinqAuth.userNumber
+      }
+      writeFileSync(configPath, JSON.stringify(config))
+    } catch (error) {
+      this.log.error('Failed to store updated config', error)
+    }
   }
 }

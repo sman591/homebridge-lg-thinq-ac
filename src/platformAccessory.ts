@@ -8,7 +8,6 @@ import type {
 } from 'homebridge'
 
 import { ExampleHomebridgePlatform } from './platform'
-import { setPower, getDevice } from './thinq/api'
 import { powerStateFromValue, modeFromValue } from './thinq/convert'
 
 type cachedStateConfig = {
@@ -121,8 +120,15 @@ export class ExamplePlatformAccessory {
   }
 
   async updateCharacteristics() {
+    if (!this.platform.thinqApi.getIsLoggedIn()) {
+      this.platform.log.debug('Not logged in; skipping updateCharacteristics()')
+      return
+    }
+
     try {
-      const device = await getDevice(this.cachedState.deviceId)
+      const device = await this.platform.thinqApi.getDevice(
+        this.cachedState.deviceId,
+      )
 
       this.cachedState.power = powerStateFromValue(
         ('' + device.result.snapshot['airState.operation']) as '1' | '0',
@@ -150,7 +156,7 @@ export class ExamplePlatformAccessory {
 
       this.platform.log.debug('Pushed updates to HomeKit', this.cachedState)
     } catch (error) {
-      this.platform.log.error('Error during interval update', error)
+      this.platform.log.error('Error during interval update', error.toString())
     }
   }
 
@@ -182,7 +188,8 @@ export class ExamplePlatformAccessory {
       return
     }
 
-    setPower(this.cachedState.deviceId, powerState)
+    this.platform.thinqApi
+      .setPower(this.cachedState.deviceId, powerState)
       .then(() => {
         this.cachedState.power = powerState
         callback(null)

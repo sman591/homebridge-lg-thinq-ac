@@ -5,6 +5,36 @@
   "schema": {
     "type": "object",
     "properties": {
+      "auth_login_url": {
+        "title": "Login URL (paste this into your browser)",
+        "type": "string",
+        "required": false
+      },
+      "auth_redirected_url": {
+        "title": "Redirected URL (copy the URL address after logging in, paste it here, save, and restart homebridge)",
+        "type": "string",
+        "required": false
+      },
+      "auth_login_state": {
+        "title": "Login state (DO NOT MODIFY)",
+        "type": "string",
+        "required": false
+      },
+      "auth_access_token": {
+        "title": "Access token (DO NOT MODIFY)",
+        "type": "string",
+        "required": false
+      },
+      "auth_refresh_token": {
+        "title": "Refresh token (DO NOT MODIFY)",
+        "type": "string",
+        "required": false
+      },
+      "auth_user_number": {
+        "title": "User number (DO NOT MODIFY)",
+        "type": "string",
+        "required": false
+      },
       "refresh_interval": {
         "title": "Refresh interval (requires Homebridge restart)",
         "type": "number",

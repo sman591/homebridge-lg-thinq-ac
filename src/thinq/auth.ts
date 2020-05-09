@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import ClientOAuth2 from 'client-oauth2'
 import { v4 as uuidv4 } from 'uuid'
 import querystring from 'querystring'
@@ -10,14 +11,32 @@ const THINQ_CLIENT_ID = 'LGAO221A02'
 const THINQ_SECRET_KEY = 'c053c2a6ddeb7ad97cb0eed0dcb31cf8'
 
 export default class ThinqAuth {
-  log: Logger
-  accessTokenUri: string
-  redirectUri: string
-  auth: ClientOAuth2.CodeFlow
-  token?: ClientOAuth2.Token
+  private log: Logger
+  private accessTokenUri: string
+  private redirectUri: string
+  private auth: ClientOAuth2
+  private token?: ClientOAuth2.Token
 
-  constructor(logger: Logger) {
+  public userNumber?: string
+  public readonly authState: string
+
+  get accessToken() {
+    return this.token?.accessToken
+  }
+
+  get refreshToken() {
+    return this.token?.refreshToken
+  }
+
+  constructor(
+    logger: Logger,
+    existingState?: string,
+    existingAccessToken?: string,
+    existingRefreshToken?: string,
+    existingUserNumber?: string,
+  ) {
     this.log = logger
+    this.authState = existingState || uuidv4()
     this.accessTokenUri = 'https://us.lgeapi.com/oauth/1.0/oauth2/token'
     this.redirectUri = 'https://kr.m.lgaccount.com/login/iabClose'
     this.auth = new ClientOAuth2({
@@ -25,19 +44,29 @@ export default class ThinqAuth {
       redirectUri: this.redirectUri,
       accessTokenUri: this.accessTokenUri,
       authorizationUri: 'https://us.m.lgaccount.com/spx/login/signIn',
-      state: uuidv4(),
-    }).code
+      state: this.authState,
+    })
+    if (existingAccessToken && existingRefreshToken && existingUserNumber) {
+      this.userNumber = existingUserNumber
+      this.token = new ClientOAuth2.Token(this.auth, {
+        token_type: 'code',
+        access_token: existingAccessToken,
+        refresh_token: existingRefreshToken,
+      })
+    }
+  }
+
+  getIsLoggedIn() {
+    return this.refreshToken && this.accessToken && this.userNumber
   }
 
   getLoginUri() {
-    return this.auth.getUri({
+    return this.auth.code.getUri({
       query: {
         country: 'US',
         langauge: 'en-US',
-        // eslint-disable-next-line @typescript-eslint/camelcase
         svc_list: 'SVC202',
         division: 'ha',
-        // eslint-disable-next-line @typescript-eslint/camelcase
         show_thirdparty_login: 'GGL,AMZ,FBK',
       },
     })
@@ -48,33 +77,30 @@ export default class ThinqAuth {
     // NOTE: This is the body ClientOAuth2 will send
     const mockedBody = {
       // ClientOAuth2 will inject a client_id parameter
-      // eslint-disable-next-line @typescript-eslint/camelcase
       client_id: THINQ_CLIENT_ID,
       code: parsedUrlRedirectedTo.searchParams.get('code') as string,
-      // eslint-disable-next-line @typescript-eslint/camelcase
       grant_type: 'authorization_code',
-      // eslint-disable-next-line @typescript-eslint/camelcase
       redirect_uri: this.redirectUri,
     }
     try {
-      this.token = await this.auth.getToken(urlRedirectedTo, {
+      this.token = await this.auth.code.getToken(urlRedirectedTo, {
         headers: this.lgeOauthHeaders(mockedBody),
       })
+      this.userNumber =
+        parsedUrlRedirectedTo.searchParams.get('user_number') ?? undefined
     } catch (error) {
       this.log.error('Failed to get access token', error)
     }
   }
 
-  async refreshToken() {
+  async initiateRefreshToken() {
     if (!this.token) {
       this.log.error(`Cannot refreshToken() when a token hasn't been stored`)
       return
     }
     // NOTE: This is the body ClientOAuth2 will send
     const mockedBody = {
-      // eslint-disable-next-line @typescript-eslint/camelcase
       grant_type: 'refresh_token',
-      // eslint-disable-next-line @typescript-eslint/camelcase
       refresh_token: this.token.refreshToken,
     }
     try {
