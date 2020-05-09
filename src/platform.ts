@@ -9,6 +9,7 @@ import type {
 
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings'
 import { ExamplePlatformAccessory } from './platformAccessory'
+import { getDashboard } from './thinq/api'
 
 /**
  * HomebridgePlatform
@@ -60,38 +61,34 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
    * Accessories must only be registered once, previously created accessories
    * must not be registered again to prevent "duplicate UUID" errors.
    */
-  discoverDevices() {
+  async discoverDevices() {
     // EXAMPLE ONLY
     // A real plugin you would discover accessories from the local network, cloud services
     // or a user-defined array in the platform config.
-    const exampleDevices = [
-      {
-        exampleUniqueId: 'ABCD',
-        exampleDisplayName: 'Bedroom',
-      },
-      {
-        exampleUniqueId: 'EFGH',
-        exampleDisplayName: 'Kitchen',
-      },
-    ]
+
+    const dashboardResponse = await getDashboard()
+
+    const devices = dashboardResponse.result.item.filter(
+      (item) =>
+        typeof item === 'object' &&
+        'deviceType' in item &&
+        item.deviceType === 401,
+    )
 
     // loop over the discovered devices and register each one if it has not already been registered
-    for (const device of exampleDevices) {
+    for (const device of devices) {
       // generate a unique id for the accessory this should be generated from
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
-      const uuid = this.api.hap.uuid.generate(device.exampleUniqueId)
+      const uuid = this.api.hap.uuid.generate(device.deviceId)
 
       // check that the device has not already been registered by checking the
       // cached devices we stored in the `configureAccessory` method above
       if (!this.accessories.find((accessory) => accessory.UUID === uuid)) {
-        this.log.info('Registering new accessory:', device.exampleDisplayName)
+        this.log.info('Registering new accessory:', device.alias)
 
         // create a new accessory
-        const accessory = new this.api.platformAccessory(
-          device.exampleDisplayName,
-          uuid,
-        )
+        const accessory = new this.api.platformAccessory(device.alias, uuid)
 
         // store a copy of the device object in the `accessory.context`
         // the `context` property can be used to store any data about the accessory you may need
