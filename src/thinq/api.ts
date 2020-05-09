@@ -5,6 +5,7 @@ import {
   GenericResponse,
   GetDashboardResponse,
 } from './apiTypes'
+import { valueFromPowerState, valueFromMode, valueFromFan } from './convert'
 
 const X_USER_NO = ''
 const X_EMP_TOKEN = ''
@@ -73,43 +74,29 @@ async function sendCommand(
   return response.data as GenericResponse
 }
 
-const powerStateValueMap = {
-  on: '1',
-  off: '0',
-} as const
 export async function setPower(deviceId: string, powerState: 'on' | 'off') {
   return await sendCommand(
     deviceId,
     'Operation',
     'airState.operation',
-    powerStateValueMap[powerState],
+    valueFromPowerState(powerState),
   )
 }
 
-const modeValueMap = {
-  cool: '0',
-  dry: '1',
-  fan: '2',
-} as const
 export async function setMode(deviceId: string, mode: 'fan' | 'dry' | 'cool') {
   return await sendCommand(
     deviceId,
     'Set',
     'airState.opMode',
-    modeValueMap[mode],
+    valueFromMode(mode),
   )
 }
 
-const fanValueMap = {
-  low: '2',
-  medium: '4',
-  high: '6',
-} as const
 export async function setFan(deviceId: string, fan: 'low' | 'medium' | 'high') {
   return await sendCommand(
     deviceId,
     'Set',
     'airState.windStrength',
-    fanValueMap[fan],
+    valueFromFan(fan),
   )
 }

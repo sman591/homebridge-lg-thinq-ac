@@ -8,11 +8,18 @@ import type {
 } from 'homebridge'
 
 import { ExampleHomebridgePlatform } from './platform'
-import { setPower } from './thinq/api'
+import { setPower, getDevice } from './thinq/api'
+import { powerStateFromValue, modeFromValue } from './thinq/convert'
+
+// TODO: put this in the homebridge config
+const REFRESH_INTERVAL = 30 * 1000 // 30 seconds
 
 type cachedStateConfig = {
   deviceId: string
   power: 'on' | 'off' | null
+  currentTemperature: number | null
+  targetTemperature: number | null
+  mode: 'cool' | 'dry' | 'fan' | null
 }
 
 /**
@@ -30,6 +37,9 @@ export class ExamplePlatformAccessory {
   private cachedState: cachedStateConfig = {
     deviceId: '',
     power: null,
+    currentTemperature: null,
+    targetTemperature: null,
+    mode: null,
   }
 
   constructor(
@@ -106,21 +116,42 @@ export class ExamplePlatformAccessory {
     //
     // Here we change update the brightness to a random value every 5 seconds using
     // the `updateCharacteristic` method.
-    // setInterval(() => {
-    //   // assign the current brightness a random value between 0 and 100
-    //   const currentBrightness = Math.floor(Math.random() * 100)
+    this.updateCharacteristics()
+    setInterval(this.updateCharacteristics.bind(this), REFRESH_INTERVAL)
+  }
 
-    //   // push the new value to HomeKit
-    //   this.service.updateCharacteristic(
-    //     this.platform.Characteristic.Brightness,
-    //     currentBrightness,
-    //   )
+  async updateCharacteristics() {
+    try {
+      const device = await getDevice(this.cachedState.deviceId)
 
-    //   this.platform.log.debug(
-    //     'Pushed updated current Brightness state to HomeKit:',
-    //     currentBrightness,
-    //   )
-    // }, 10000)
+      this.cachedState.power = powerStateFromValue(
+        ('' + device.result.snapshot['airState.operation']) as '1' | '0',
+      )
+      this.cachedState.currentTemperature =
+        device.result.snapshot['airState.tempState.current']
+      this.cachedState.targetTemperature =
+        device.result.snapshot['airState.tempState.target']
+      this.cachedState.mode = modeFromValue(
+        ('' + device.result.snapshot['airState.opMode']) as '0' | '1' | '2',
+      )
+
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.Active,
+        this.cachedState.power === 'on' ? 1 : 0,
+      )
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.CurrentTemperature,
+        this.cachedState.currentTemperature,
+      )
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.CoolingThresholdTemperature,
+        this.cachedState.targetTemperature,
+      )
+
+      this.platform.log.debug('Pushed updates to HomeKit', this.cachedState)
+    } catch (error) {
+      this.platform.log.error('Error during interval update', error)
+    }
   }
 
   handleActiveGet(callback: CharacteristicGetCallback) {
