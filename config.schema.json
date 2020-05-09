@@ -5,11 +5,49 @@
   "schema": {
     "type": "object",
     "properties": {
-      "name": {
-        "title": "Name",
-        "type": "string",
-        "required": true,
-        "default": "Example Dynamic Platform"
+      "refresh_interval": {
+        "title": "Refresh interval (requires Homebridge restart)",
+        "type": "number",
+        "default": 1,
+        "oneOf": [
+          {
+            "title": "30 seconds",
+            "enum": [
+              0.5
+            ]
+          },
+          {
+            "title": "1 minute (default)",
+            "enum": [
+              1
+            ]
+          },
+          {
+            "title": "3 minutes",
+            "enum": [
+              3
+            ]
+          },
+          {
+            "title": "10 minutes",
+            "enum": [
+              10
+            ]
+          },
+          {
+            "title": "1 hour",
+            "enum": [
+              60
+            ]
+          },
+          {
+            "title": "1 day",
+            "enum": [
+              1440
+            ]
+          }
+        ],
+        "required": false
       }
     }
   }

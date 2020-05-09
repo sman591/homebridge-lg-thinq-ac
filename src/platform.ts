@@ -115,4 +115,17 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       }
     }
   }
+
+  refreshIntervalMinutes() {
+    const fallbackDefault = 1
+    try {
+      const parsedValue = parseFloat(this.config.refresh_interval)
+      if (parsedValue > 0.1 && parsedValue < 100000) {
+        return parsedValue
+      }
+    } catch (error) {
+      this.log.error('Failed to parse refresh_interval from config', error)
+    }
+    return fallbackDefault
+  }
 }

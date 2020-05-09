@@ -11,9 +11,6 @@ import { ExampleHomebridgePlatform } from './platform'
 import { setPower, getDevice } from './thinq/api'
 import { powerStateFromValue, modeFromValue } from './thinq/convert'
 
-// TODO: put this in the homebridge config
-const REFRESH_INTERVAL = 30 * 1000 // 30 seconds
-
 type cachedStateConfig = {
   deviceId: string
   power: 'on' | 'off' | null
@@ -117,7 +114,10 @@ export class ExamplePlatformAccessory {
     // Here we change update the brightness to a random value every 5 seconds using
     // the `updateCharacteristic` method.
     this.updateCharacteristics()
-    setInterval(this.updateCharacteristics.bind(this), REFRESH_INTERVAL)
+    setInterval(
+      this.updateCharacteristics.bind(this),
+      this.platform.refreshIntervalMinutes(),
+    )
   }
 
   async updateCharacteristics() {
