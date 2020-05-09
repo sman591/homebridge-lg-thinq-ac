@@ -26,10 +26,13 @@
     "homebridge-plugin"
   ],
   "dependencies": {
-    "axios": "^0.19.2"
+    "axios": "^0.19.2",
+    "client-oauth2": "^4.3.0",
+    "uuid": "^8.0.0"
   },
   "devDependencies": {
     "@types/node": "^13.13.4",
+    "@types/uuid": "^7.0.3",
     "@typescript-eslint/eslint-plugin": "^2.30.0",
     "@typescript-eslint/parser": "^2.30.0",
     "eslint": "^6.8.0",
