@@ -10,6 +10,11 @@ import type {
 import { ExampleHomebridgePlatform } from './platform'
 import { setPower } from './thinq/api'
 
+type cachedStateConfig = {
+  deviceId: string
+  power: 'on' | 'off' | null
+}
+
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
@@ -22,9 +27,9 @@ export class ExamplePlatformAccessory {
    * These are just used to create a working example
    * You should implement your own code to track the state of your accessory
    */
-  private cachedState = {
+  private cachedState: cachedStateConfig = {
     deviceId: '',
-    active: true,
+    power: null,
   }
 
   constructor(
@@ -122,7 +127,7 @@ export class ExamplePlatformAccessory {
     this.platform.log.debug('Triggered GET Active')
 
     // set this to a valid value for Active
-    const currentValue = this.cachedState.active ? 1 : 0
+    const currentValue = this.cachedState.power === 'on' ? 1 : 0
 
     callback(null, currentValue)
   }
@@ -134,9 +139,17 @@ export class ExamplePlatformAccessory {
     this.platform.log.debug('Triggered SET Active:', value)
 
     const powerState = value === 1 ? 'on' : 'off'
+
+    if (powerState === this.cachedState.power) {
+      // The air conditioner will make a sound every time this API is called.
+      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
+      callback(null)
+      return
+    }
+
     setPower(this.cachedState.deviceId, powerState)
       .then(() => {
-        this.cachedState.active = powerState === 'on'
+        this.cachedState.power = powerState
         callback(null)
       })
       .catch((error) => callback(error))

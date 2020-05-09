@@ -37,7 +37,9 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       log.debug('Executed didFinishLaunching callback')
       // run the method to discover / register your devices as accessories
-      this.discoverDevices()
+      this.discoverDevices().catch((error) =>
+        log.error('Error discovering devices', error),
+      )
     })
   }
 
@@ -46,7 +48,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
    * It should be used to setup event handlers for characteristics and update respective values.
    */
   configureAccessory(accessory: PlatformAccessory) {
-    this.log.info('Restoring accessory from cache:', accessory.displayName)
+    this.log.debug('Restoring accessory from cache:', accessory.displayName)
 
     // create the accessory handler
     // this is imported from `platformAccessory.ts`
@@ -67,6 +69,8 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     // or a user-defined array in the platform config.
 
     const dashboardResponse = await getDashboard()
+
+    this.log.debug('dashboardResponse', dashboardResponse)
 
     const devices = dashboardResponse.result.item.filter(
       (item) =>
