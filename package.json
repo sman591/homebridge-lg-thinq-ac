@@ -1,16 +1,16 @@
 {
   "private": true,
-  "displayName": "Plugin Name",
-  "name": "homebridge-plugin-name",
+  "displayName": "LG ThinQ Air Conditioner",
+  "name": "homebridge-lg-thinq-ac",
   "version": "1.0.0",
-  "description": "A short description about what your plugin does.",
+  "description": "Homebridge plugin for LG ThinQ-enabled portable air conditioner",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/USERNAME/GITHUB_PROJECT_NAME.git"
+    "url": "git://github.com/sman591/homebridge-lg-thinq-ac.git"
   },
   "bugs": {
-    "url": "https://github.com/USERNAME/GITHUB_PROJECT_NAME/issues"
+    "url": "https://github.com/sman591/homebridge-lg-thinq-ac/issues"
   },
   "engines": {
     "node": ">=10.17.0",

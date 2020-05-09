@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "LgThinqAirConditioner",
   "pluginType": "platform",
   "singular": true,
   "schema": {
