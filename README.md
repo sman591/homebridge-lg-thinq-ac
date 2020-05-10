@@ -8,6 +8,13 @@
 
 # homebridge-lg-thinq-ac
 
+<p>
+  <a href="https://www.npmjs.com/package/homebridge-lg-thinq-ac" target="_blank">
+    <img alt="Version" src="https://img.shields.io/npm/v/homebridge-lg-thinq-ac.svg">
+  </a>
+</p>
+
+
 [Homebridge](https://homebridge.io) plugin for LG ThinQ-enabled portable air conditioners.
 
 **WARNING:** This has only been tested with the [LP1419IVSM](https://www.lg.com/us/air-conditioners/lg-LP1419IVSM-portable-air-conditioner) model. This may not work with other models.
