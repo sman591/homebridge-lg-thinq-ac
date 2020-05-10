@@ -30,6 +30,9 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
   public readonly thinqAuth: ThinqAuth
   public readonly thinqApi: ThinqApi
 
+  private didFinishLaunching: Promise<void>
+  private finishedLaunching: Function | undefined
+
   constructor(
     public readonly log: Logger,
     public readonly config: PlatformConfig,
@@ -37,6 +40,9 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
   ) {
     this.thinqAuth = ThinqAuth.fromConfig(log, this.config as ThinqAuthConfig)
     this.thinqApi = new ThinqApi(this.thinqAuth)
+    this.didFinishLaunching = new Promise(
+      (resolve) => (this.finishedLaunching = resolve),
+    )
     this.log.debug('Finished initializing platform:', this.config.name)
 
     this.inititializeAuth()
@@ -46,11 +52,10 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     // in order to ensure they weren't added to homebridge already. This event can also be used
     // to start discovery of new accessories.
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
-      log.debug('Executed didFinishLaunching callback')
-      // run the method to discover / register your devices as accessories
-      this.discoverDevices().catch((error) =>
-        log.error('Error discovering devices', error.toString()),
-      )
+      this.log.debug('Executed didFinishLaunching callback')
+      if (this.finishedLaunching) {
+        this.finishedLaunching()
+      }
     })
   }
 
@@ -74,6 +79,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     const redirectedUrl = this.config.auth_redirected_url as unknown
     if (this.thinqAuth.getIsLoggedIn()) {
       this.log.info('Already logged into ThinQ')
+      this.refreshAuth().then(() => this.discoverDevicesWhenReady())
       this.startRefreshTokenInterval()
     } else if (typeof redirectedUrl === 'string' && redirectedUrl !== '') {
       this.log.info('Initiating auth with provided redirect URL')
@@ -84,9 +90,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       } catch (error) {
         this.log.error('Error setting refresh token', error)
       }
-      this.discoverDevices().catch((error) =>
-        this.log.error('Error discovering devices', error.toString()),
-      )
+      this.discoverDevicesWhenReady()
     } else {
       this.log.debug(
         'Redirected URL not stored in config and no existing auth state. Skipping initializeAuth().',
@@ -95,18 +99,30 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
   }
 
   private startRefreshTokenInterval() {
-    setInterval(async () => {
-      this.log.debug('Initiating refreshToken()')
-      try {
-        await this.thinqAuth.initiateRefreshToken()
-        this.updateAndReplaceConfig()
-      } catch (error) {
-        this.log.error(
-          'Failed to refresh token during interval',
-          error.toString(),
-        )
-      }
-    }, AUTH_REFRESH_INTERVAL)
+    setInterval(() => this.refreshAuth(), AUTH_REFRESH_INTERVAL)
+  }
+
+  private async refreshAuth() {
+    this.log.debug('Initiating refreshToken()')
+    try {
+      await this.thinqAuth.initiateRefreshToken()
+      this.updateAndReplaceConfig()
+    } catch (error) {
+      this.log.error(
+        'Failed to refresh token during interval',
+        error.toString(),
+      )
+    }
+  }
+
+  private async discoverDevicesWhenReady() {
+    await this.didFinishLaunching
+    // run the method to discover / register your devices as accessories
+    try {
+      await this.discoverDevices()
+    } catch (error) {
+      this.log.error('Error discovering devices', error.toString())
+    }
   }
 
   /**
