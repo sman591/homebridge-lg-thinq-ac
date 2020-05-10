@@ -37,7 +37,6 @@ export class ExamplePlatformAccessory {
   }
 
   getDeviceId() {
-    this.platform.log.info(this.accessory.context.device.deviceId)
     return this.accessory.context.device.deviceId
   }
 
