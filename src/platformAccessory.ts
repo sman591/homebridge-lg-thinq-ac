@@ -136,6 +136,7 @@ export class ExamplePlatformAccessory {
     }
 
     try {
+      this.platform.log.debug('Getting device status', this.getDeviceId())
       const device = await this.platform.thinqApi.getDevice(this.getDeviceId()!)
 
       // Store a cache of the state
@@ -206,7 +207,7 @@ export class ExamplePlatformAccessory {
   ) {
     this.platform.log.debug('Triggered SET Active:', value)
 
-    const powerState = value === 1 ? 'on' : 'off'
+    const powerState = Number(value) === 1 ? 'on' : 'off'
 
     if (powerState === this.cachedState.power) {
       // The air conditioner will make a sound every time this API is called.
@@ -215,7 +216,7 @@ export class ExamplePlatformAccessory {
         'Power state equals cached state. Skipping.',
         powerState,
       )
-      callback(null)
+      callback(null, value)
       return
     }
 
@@ -223,9 +224,16 @@ export class ExamplePlatformAccessory {
       .setPower(this.getDeviceId()!, powerState)
       .then(() => {
         this.cachedState.power = powerState
-        callback(null)
+        callback(null, value)
       })
-      .catch((error) => callback(error))
+      .catch((error) => {
+        this.platform.log.error(
+          'Failed to set power state',
+          powerState,
+          error.toString(),
+        )
+        callback(error)
+      })
   }
 
   handleTargetHeaterCoolerStateSet(
@@ -254,7 +262,7 @@ export class ExamplePlatformAccessory {
         'Target heater cooler state equals cached state. Skipping.',
         mode,
       )
-      callback(null)
+      callback(null, value)
       return
     }
 
@@ -262,9 +270,12 @@ export class ExamplePlatformAccessory {
       .setMode(this.getDeviceId()!, mode)
       .then(() => {
         this.cachedState.mode = mode
-        callback(null)
+        callback(null, value)
       })
-      .catch((error) => callback(error))
+      .catch((error) => {
+        this.platform.log.error('Failed to set mode', mode, error.toString())
+        callback(error)
+      })
   }
 
   handleTargetCoolingThresholdTemperature(
@@ -280,7 +291,11 @@ export class ExamplePlatformAccessory {
     try {
       targetTemperature = Number(value)
     } catch (error) {
-      this.platform.log.error('Could not parse temperature value', value, error)
+      this.platform.log.error(
+        'Could not parse temperature value',
+        value,
+        error.toString(),
+      )
       callback(error)
       return
     }
@@ -295,7 +310,7 @@ export class ExamplePlatformAccessory {
         'Target heater cooler state equals cached state. Skipping.',
         targetTemperature,
       )
-      callback(null)
+      callback(null, value)
       return
     }
 
@@ -303,9 +318,16 @@ export class ExamplePlatformAccessory {
       .setTemperature(this.getDeviceId()!, targetTemperature)
       .then(() => {
         this.cachedState.targetTemperature = targetTemperature
-        callback(null)
+        callback(null, value)
       })
-      .catch((error) => callback(error))
+      .catch((error) => {
+        this.platform.log.error(
+          'Failed to set target temperature',
+          targetTemperature,
+          error,
+        )
+        callback(error)
+      })
   }
 
   handleRotationSpeedSet(
@@ -329,7 +351,7 @@ export class ExamplePlatformAccessory {
       // The air conditioner will make a sound every time this API is called.
       // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
       this.platform.log.debug('Fan state equals cached state. Skipping.', fan)
-      callback(null)
+      callback(null, value)
       return
     }
 
@@ -337,9 +359,12 @@ export class ExamplePlatformAccessory {
       .setFan(this.getDeviceId()!, fan)
       .then(() => {
         this.cachedState.fan = fan
-        callback(null)
+        callback(null, value)
       })
-      .catch((error) => callback(error))
+      .catch((error) => {
+        this.platform.log.error('Failed to set fan', fan, error.toString())
+        callback(error)
+      })
   }
 
   /**
