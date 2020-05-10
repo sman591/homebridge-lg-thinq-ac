@@ -113,9 +113,13 @@ export class ExamplePlatformAccessory {
     // Here we change update the brightness to a random value every 5 seconds using
     // the `updateCharacteristic` method.
     this.updateCharacteristics()
+    const refreshInterval = this.platform.refreshIntervalMinutes()
+    this.platform.log.info(
+      `Starting refresh interval (set to ${refreshInterval} minutes)`,
+    )
     setInterval(
       this.updateCharacteristics.bind(this),
-      this.platform.refreshIntervalMinutes(),
+      refreshInterval * 60 * 1000,
     )
   }
 
