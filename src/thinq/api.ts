@@ -66,11 +66,20 @@ export default class ThinqApi {
     )
   }
 
+  async setTemperature(deviceId: string, temperatureCelcius: number) {
+    return await this.sendCommand(
+      deviceId,
+      'Set',
+      'airState.tempState.target',
+      temperatureCelcius,
+    )
+  }
+
   private async sendCommand(
     deviceId: string,
     command: 'Set' | 'Operation',
     dataKey: string,
-    dataValue: string,
+    dataValue: string | number,
   ) {
     const response = await axios({
       method: 'POST',

@@ -1,10 +1,11 @@
-import { CharacteristicEventTypes } from 'homebridge'
+import { CharacteristicEventTypes, Characteristic } from 'homebridge'
 import type {
   Service,
   PlatformAccessory,
   CharacteristicValue,
   CharacteristicSetCallback,
 } from 'homebridge'
+import debounce from 'lodash.debounce'
 
 import { ExampleHomebridgePlatform } from './platform'
 import {
@@ -92,40 +93,24 @@ export class ExamplePlatformAccessory {
     // create handlers for required characteristics
     this.service
       .getCharacteristic(this.platform.Characteristic.Active)
-      // .on(CharacteristicEventTypes.GET, this.handleActiveGet.bind(this))
       .on(CharacteristicEventTypes.SET, this.handleActiveSet.bind(this))
 
-    // this.service
-    //   .getCharacteristic(this.platform.Characteristic.CurrentHeaterCoolerState)
-    //   .on(
-    //     CharacteristicEventTypes.GET,
-    //     this.handleCurrentHeaterCoolerStateGet.bind(this),
-    //   )
+    this.service
+      .getCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState)
+      .on(
+        CharacteristicEventTypes.SET,
+        this.handleTargetHeaterCoolerStateSet.bind(this),
+      )
 
-    // this.service
-    //   .getCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState)
-    //   .on(
-    //     CharacteristicEventTypes.GET,
-    //     this.handleTargetHeaterCoolerStateGet.bind(this),
-    //   )
-    //   .on(
-    //     CharacteristicEventTypes.SET,
-    //     this.handleTargetHeaterCoolerStateSet.bind(this),
-    //   )
+    this.service
+      .getCharacteristic(
+        this.platform.Characteristic.CoolingThresholdTemperature,
+      )
+      .on(
+        CharacteristicEventTypes.SET,
+        debounce(this.handleTargetCoolingThresholdTemperature.bind(this), 1000),
+      )
 
-    // this.service
-    //   .getCharacteristic(this.platform.Characteristic.CurrentTemperature)
-    //   .on(
-    //     CharacteristicEventTypes.GET,
-    //     this.handleCurrentTemperatureGet.bind(this),
-    //   )
-
-    // EXAMPLE ONLY
-    // Example showing how to update the state of a Characteristic asynchronously instead
-    // of using the `on('get')` handlers.
-    //
-    // Here we change update the brightness to a random value every 5 seconds using
-    // the `updateCharacteristic` method.
     this.updateCharacteristics()
     const refreshInterval = this.platform.refreshIntervalMinutes()
     this.platform.log.info(
@@ -208,15 +193,6 @@ export class ExamplePlatformAccessory {
     }
   }
 
-  // handleActiveGet(callback: CharacteristicGetCallback) {
-  //   this.platform.log.debug('Triggered GET Active')
-
-  //   // set this to a valid value for Active
-  //   const currentValue = this.cachedState.power === 'on' ? 1 : 0
-
-  //   callback(null, currentValue)
-  // }
-
   handleActiveSet(
     value: CharacteristicValue,
     callback: CharacteristicSetCallback,
@@ -240,6 +216,83 @@ export class ExamplePlatformAccessory {
       .setPower(this.getDeviceId()!, powerState)
       .then(() => {
         this.cachedState.power = powerState
+        callback(null)
+      })
+      .catch((error) => callback(error))
+  }
+
+  handleTargetHeaterCoolerStateSet(
+    value: CharacteristicValue,
+    callback: CharacteristicSetCallback,
+  ) {
+    this.platform.log.debug('Triggered SET Heater Cooler State:', value)
+
+    let mode: 'cool' | 'dry' | 'fan'
+    switch (value) {
+      case Characteristic.TargetHeaterCoolerState.COOL:
+        mode = 'cool'
+        break
+      case Characteristic.TargetHeaterCoolerState.HEAT:
+        mode = 'dry'
+        break
+      case Characteristic.TargetHeaterCoolerState.AUTO:
+      default:
+        mode = 'fan'
+    }
+
+    if (mode === this.cachedState.mode) {
+      // The air conditioner will make a sound every time this API is called.
+      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
+      this.platform.log.debug(
+        'Target heater cooler state equals cached state. Skipping.',
+        mode,
+      )
+      callback(null)
+      return
+    }
+
+    this.platform.thinqApi
+      .setMode(this.getDeviceId()!, mode)
+      .then(() => {
+        this.cachedState.mode = mode
+        callback(null)
+      })
+      .catch((error) => callback(error))
+  }
+
+  handleTargetCoolingThresholdTemperature(
+    value: CharacteristicValue,
+    callback: CharacteristicSetCallback,
+  ) {
+    this.platform.log.debug(
+      'Triggered SET Cooling Threshold Temperature:',
+      value,
+    )
+
+    let targetTemperature: number
+    try {
+      targetTemperature = Number(value)
+    } catch (error) {
+      this.platform.log.error('Could not parse temperature value', value, error)
+      callback(error)
+      return
+    }
+
+    if (targetTemperature === this.cachedState.targetTemperature) {
+      // The air conditioner will make a sound every time this API is called.
+      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
+      this.platform.log.debug(
+        'Target heater cooler state equals cached state. Skipping.',
+        targetTemperature,
+      )
+      callback(null)
+      return
+    }
+
+    this.platform.thinqApi
+      .setTemperature(this.getDeviceId()!, targetTemperature)
+      .then(() => {
+        this.cachedState.targetTemperature = targetTemperature
         callback(null)
       })
       .catch((error) => callback(error))

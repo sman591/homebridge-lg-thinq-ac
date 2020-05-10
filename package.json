@@ -28,9 +28,11 @@
   "dependencies": {
     "axios": "^0.19.2",
     "client-oauth2": "^4.3.0",
+    "lodash.debounce": "^4.0.8",
     "uuid": "^8.0.0"
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.6",
     "@types/node": "^13.13.4",
     "@types/uuid": "^7.0.3",
     "@typescript-eslint/eslint-plugin": "^2.30.0",
