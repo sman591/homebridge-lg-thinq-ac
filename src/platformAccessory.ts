@@ -11,7 +11,6 @@ import { ExampleHomebridgePlatform } from './platform'
 import { powerStateFromValue, modeFromValue } from './thinq/convert'
 
 type cachedStateConfig = {
-  deviceId: string
   power: 'on' | 'off' | null
   currentTemperature: number | null
   targetTemperature: number | null
@@ -31,11 +30,15 @@ export class ExamplePlatformAccessory {
    * You should implement your own code to track the state of your accessory
    */
   private cachedState: cachedStateConfig = {
-    deviceId: '',
     power: null,
     currentTemperature: null,
     targetTemperature: null,
     mode: null,
+  }
+
+  getDeviceId() {
+    this.platform.log.info(this.accessory.context.device.deviceId)
+    return this.accessory.context.device.deviceId
   }
 
   constructor(
@@ -130,9 +133,7 @@ export class ExamplePlatformAccessory {
     }
 
     try {
-      const device = await this.platform.thinqApi.getDevice(
-        this.cachedState.deviceId,
-      )
+      const device = await this.platform.thinqApi.getDevice(this.getDeviceId())
 
       this.cachedState.power = powerStateFromValue(
         ('' + device.result.snapshot['airState.operation']) as '1' | '0',
@@ -193,7 +194,7 @@ export class ExamplePlatformAccessory {
     }
 
     this.platform.thinqApi
-      .setPower(this.cachedState.deviceId, powerState)
+      .setPower(this.getDeviceId(), powerState)
       .then(() => {
         this.cachedState.power = powerState
         callback(null)

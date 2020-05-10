@@ -80,6 +80,9 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       } catch (error) {
         this.log.error('Error setting refresh token', error)
       }
+      this.discoverDevices().catch((error) =>
+        this.log.error('Error discovering devices', error.toString()),
+      )
     } else {
       this.log.debug(
         'Redirected URL not stored in config and no existing auth state. Skipping initializeAuth().',
@@ -94,13 +97,17 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
    */
   async discoverDevices() {
     if (!this.thinqAuth.getIsLoggedIn()) {
-      this.log.debug('Not logged in; skipping discoverDevices()')
+      this.log.info('Not logged in; skipping discoverDevices()')
       return
     }
 
     const dashboardResponse = await this.thinqApi.getDashboard()
 
     this.log.debug('dashboardResponse', dashboardResponse)
+
+    this.log.info(
+      `Discover found ${dashboardResponse.result.item.length} total devices`,
+    )
 
     const devices = dashboardResponse.result.item.filter(
       (item) =>
@@ -116,9 +123,18 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       // number or MAC address
       const uuid = this.api.hap.uuid.generate(device.deviceId)
 
-      // check that the device has not already been registered by checking the
-      // cached devices we stored in the `configureAccessory` method above
-      if (!this.accessories.find((accessory) => accessory.UUID === uuid)) {
+      const matchingAccessories = this.accessories.filter(
+        (accessory) => accessory.UUID === uuid,
+      )
+
+      if (matchingAccessories.length > 0) {
+        this.log.info('Existing accessory:', device.alias)
+        // check that the device has not already been registered by checking the
+        // cached devices we stored in the `configureAccessory` method above
+        for (const accessory of matchingAccessories) {
+          accessory.context.device = device
+        }
+      } else {
         this.log.info('Registering new accessory:', device.alias)
 
         // create a new accessory
