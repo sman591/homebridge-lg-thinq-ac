@@ -36,7 +36,7 @@
     {
       "platforms": [
         {
-          "platform": "LgThinqAirConditioner",
+          "platform": "LgThinqAirConditioner"
         }
       ]
     }
