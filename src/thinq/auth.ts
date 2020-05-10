@@ -10,6 +10,14 @@ import { Logger } from 'homebridge'
 const THINQ_CLIENT_ID = 'LGAO221A02'
 const THINQ_SECRET_KEY = 'c053c2a6ddeb7ad97cb0eed0dcb31cf8'
 
+export type ThinqAuthConfig = {
+  auth_login_url?: string
+  auth_login_state?: string
+  auth_access_token?: string
+  auth_refresh_token?: string
+  auth_user_number?: string
+}
+
 export default class ThinqAuth {
   private log: Logger
   private accessTokenUri: string
@@ -24,19 +32,9 @@ export default class ThinqAuth {
     return this.token?.accessToken
   }
 
-  get refreshToken() {
-    return this.token?.refreshToken
-  }
-
-  constructor(
-    logger: Logger,
-    existingState?: string,
-    existingAccessToken?: string,
-    existingRefreshToken?: string,
-    existingUserNumber?: string,
-  ) {
+  constructor(logger: Logger, state?: string) {
     this.log = logger
-    this.authState = existingState || uuidv4()
+    this.authState = state || uuidv4()
     this.accessTokenUri = 'https://us.lgeapi.com/oauth/1.0/oauth2/token'
     this.redirectUri = 'https://kr.m.lgaccount.com/login/iabClose'
     this.auth = new ClientOAuth2({
@@ -46,18 +44,27 @@ export default class ThinqAuth {
       authorizationUri: 'https://us.m.lgaccount.com/spx/login/signIn',
       state: this.authState,
     })
-    if (existingAccessToken && existingRefreshToken && existingUserNumber) {
-      this.userNumber = existingUserNumber
-      this.token = new ClientOAuth2.Token(this.auth, {
+  }
+
+  static fromConfig(logger: Logger, existingConfig: ThinqAuthConfig) {
+    const instance = new ThinqAuth(logger, existingConfig.auth_login_state)
+    if (
+      existingConfig.auth_access_token &&
+      existingConfig.auth_refresh_token &&
+      existingConfig.auth_user_number
+    ) {
+      instance.userNumber = existingConfig.auth_user_number
+      instance.token = new ClientOAuth2.Token(instance.auth, {
         token_type: 'code',
-        access_token: existingAccessToken,
-        refresh_token: existingRefreshToken,
+        access_token: existingConfig.auth_access_token,
+        refresh_token: existingConfig.auth_refresh_token,
       })
     }
+    return instance
   }
 
   getIsLoggedIn() {
-    return this.refreshToken && this.accessToken && this.userNumber
+    return this.accessToken && this.userNumber
   }
 
   getLoginUri() {
@@ -129,6 +136,17 @@ export default class ThinqAuth {
       'x-lge-oauth-date': timestamp,
       Accept: 'application/json',
       'Accept-Language': 'en-us',
+    }
+  }
+
+  serializeToConfig(): Record<string, string | undefined> {
+    // The "keys" of this object map directly to the configs defined in config.shema.json
+    return {
+      auth_login_url: this.getLoginUri(),
+      auth_login_state: this.authState,
+      auth_access_token: this.accessToken,
+      auth_refresh_token: this.token?.refreshToken,
+      auth_user_number: this.userNumber,
     }
   }
 }

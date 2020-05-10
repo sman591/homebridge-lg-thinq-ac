@@ -11,7 +11,7 @@ import type {
 import { PLATFORM_NAME, PLUGIN_NAME } from './settings'
 import { ExamplePlatformAccessory } from './platformAccessory'
 import ThinqApi from './thinq/api'
-import ThinqAuth from './thinq/auth'
+import ThinqAuth, { ThinqAuthConfig } from './thinq/auth'
 
 /**
  * HomebridgePlatform
@@ -33,13 +33,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
-    this.thinqAuth = new ThinqAuth(
-      log,
-      this.config.auth_login_state,
-      this.config.auth_access_token,
-      this.config.auth_refresh_token,
-      this.config.auth_user_number,
-    )
+    this.thinqAuth = ThinqAuth.fromConfig(log, this.config as ThinqAuthConfig)
     this.thinqApi = new ThinqApi(this.thinqAuth)
     this.log.debug('Finished initializing platform:', this.config.name)
 
@@ -76,7 +70,10 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
   async inititializeAuth() {
     this.updateAndReplaceConfig()
     const redirectedUrl = this.config.auth_redirected_url as unknown
-    if (typeof redirectedUrl === 'string' && redirectedUrl !== '') {
+    if (this.thinqAuth.getIsLoggedIn()) {
+      this.log.info('Already logged into ThinQ')
+    } else if (typeof redirectedUrl === 'string' && redirectedUrl !== '') {
+      this.log.info('Initiating auth with provided redirect URL')
       try {
         await this.thinqAuth.processLoginResult(redirectedUrl)
         this.updateAndReplaceConfig()
@@ -85,7 +82,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       }
     } else {
       this.log.debug(
-        'Redirected URL not stored in config; skipping initializeAuth()',
+        'Redirected URL not stored in config and no existing auth state. Skipping initializeAuth().',
       )
     }
   }
@@ -172,17 +169,9 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
         (platform: Record<string, string>) =>
           platform.platform === 'LgThinqAirConditioner',
       )
+      const serializedAuth = this.thinqAuth.serializeToConfig()
       for (const platform of platforms) {
-        // eslint-disable-next-line @typescript-eslint/camelcase
-        platform.auth_login_url = this.thinqAuth.getLoginUri()
-        // eslint-disable-next-line @typescript-eslint/camelcase
-        platform.auth_login_state = this.thinqAuth.authState
-        // eslint-disable-next-line @typescript-eslint/camelcase
-        platform.auth_access_token = this.thinqAuth.accessToken
-        // eslint-disable-next-line @typescript-eslint/camelcase
-        platform.auth_refresh_token = this.thinqAuth.refreshToken
-        // eslint-disable-next-line @typescript-eslint/camelcase
-        platform.auth_user_number = this.thinqAuth.userNumber
+        Object.assign(platform, serializedAuth)
       }
       writeFileSync(configPath, JSON.stringify(config))
     } catch (error) {
