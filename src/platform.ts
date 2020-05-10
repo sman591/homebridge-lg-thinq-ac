@@ -13,6 +13,8 @@ import { ExamplePlatformAccessory } from './platformAccessory'
 import ThinqApi from './thinq/api'
 import ThinqAuth, { ThinqAuthConfig } from './thinq/auth'
 
+const AUTH_REFRESH_INTERVAL = 10 * 60 * 1000 // 10 minutes
+
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
@@ -76,6 +78,10 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       this.log.info('Initiating auth with provided redirect URL')
       try {
         await this.thinqAuth.processLoginResult(redirectedUrl)
+        setInterval(() => {
+          this.log.debug('Initiating refreshToken()')
+          this.thinqAuth.initiateRefreshToken()
+        }, AUTH_REFRESH_INTERVAL)
         this.updateAndReplaceConfig()
       } catch (error) {
         this.log.error('Error setting refresh token', error)
