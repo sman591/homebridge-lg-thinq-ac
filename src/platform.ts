@@ -74,14 +74,12 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     const redirectedUrl = this.config.auth_redirected_url as unknown
     if (this.thinqAuth.getIsLoggedIn()) {
       this.log.info('Already logged into ThinQ')
+      this.startRefreshTokenInterval()
     } else if (typeof redirectedUrl === 'string' && redirectedUrl !== '') {
       this.log.info('Initiating auth with provided redirect URL')
       try {
         await this.thinqAuth.processLoginResult(redirectedUrl)
-        setInterval(() => {
-          this.log.debug('Initiating refreshToken()')
-          this.thinqAuth.initiateRefreshToken()
-        }, AUTH_REFRESH_INTERVAL)
+        this.startRefreshTokenInterval()
         this.updateAndReplaceConfig()
       } catch (error) {
         this.log.error('Error setting refresh token', error)
@@ -94,6 +92,21 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
         'Redirected URL not stored in config and no existing auth state. Skipping initializeAuth().',
       )
     }
+  }
+
+  private startRefreshTokenInterval() {
+    setInterval(async () => {
+      this.log.debug('Initiating refreshToken()')
+      try {
+        await this.thinqAuth.initiateRefreshToken()
+        this.updateAndReplaceConfig()
+      } catch (error) {
+        this.log.error(
+          'Failed to refresh token during interval',
+          error.toString(),
+        )
+      }
+    }, AUTH_REFRESH_INTERVAL)
   }
 
   /**
