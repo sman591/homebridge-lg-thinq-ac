@@ -111,6 +111,13 @@ export class ExamplePlatformAccessory {
         debounce(this.handleTargetCoolingThresholdTemperature.bind(this), 1000),
       )
 
+    this.service
+      .getCharacteristic(this.platform.Characteristic.RotationSpeed)
+      .on(
+        CharacteristicEventTypes.SET,
+        debounce(this.handleRotationSpeedSet.bind(this), 1000),
+      )
+
     this.updateCharacteristics()
     const refreshInterval = this.platform.refreshIntervalMinutes()
     this.platform.log.info(
@@ -278,7 +285,10 @@ export class ExamplePlatformAccessory {
       return
     }
 
-    if (targetTemperature === this.cachedState.targetTemperature) {
+    if (
+      targetTemperature === this.cachedState.targetTemperature ||
+      targetTemperature - Number(this.cachedState.targetTemperature) < 0.4
+    ) {
       // The air conditioner will make a sound every time this API is called.
       // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
       this.platform.log.debug(
@@ -293,6 +303,40 @@ export class ExamplePlatformAccessory {
       .setTemperature(this.getDeviceId()!, targetTemperature)
       .then(() => {
         this.cachedState.targetTemperature = targetTemperature
+        callback(null)
+      })
+      .catch((error) => callback(error))
+  }
+
+  handleRotationSpeedSet(
+    value: CharacteristicValue,
+    callback: CharacteristicSetCallback,
+  ) {
+    this.platform.log.debug('Triggered SET Rotation Speed:', value)
+
+    const numberValue = Number(value)
+
+    let fan: 'low' | 'medium' | 'high'
+    if (numberValue > 75) {
+      fan = 'high'
+    } else if (numberValue > 40) {
+      fan = 'medium'
+    } else {
+      fan = 'low'
+    }
+
+    if (fan === this.cachedState.fan) {
+      // The air conditioner will make a sound every time this API is called.
+      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
+      this.platform.log.debug('Fan state equals cached state. Skipping.', fan)
+      callback(null)
+      return
+    }
+
+    this.platform.thinqApi
+      .setFan(this.getDeviceId()!, fan)
+      .then(() => {
+        this.cachedState.fan = fan
         callback(null)
       })
       .catch((error) => callback(error))

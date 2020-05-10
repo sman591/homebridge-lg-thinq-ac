@@ -106,9 +106,9 @@ export function rotationSpeedFromFan(fan: keyof typeof fanValueMap) {
     case 'high':
       return 100
     case 'medium':
-      return 50
+      return 66
     case 'low':
     default:
-      return 0
+      return 33
   }
 }
