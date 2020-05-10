@@ -9,6 +9,9 @@ import type {
 
 import { ExampleHomebridgePlatform } from './platform'
 import { powerStateFromValue, modeFromValue } from './thinq/convert'
+import { GetDashboardResponse } from './thinq/apiTypes'
+
+type Unpacked<T> = T extends (infer U)[] ? U : T
 
 type cachedStateConfig = {
   power: 'on' | 'off' | null
@@ -36,8 +39,12 @@ export class ExamplePlatformAccessory {
     mode: null,
   }
 
+  getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
+    return this.accessory.context.device
+  }
+
   getDeviceId() {
-    return this.accessory.context.device.deviceId
+    return this.getDevice()?.deviceId
   }
 
   constructor(
@@ -49,12 +56,15 @@ export class ExamplePlatformAccessory {
       .getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(
         this.platform.Characteristic.Manufacturer,
-        'Default-Manufacturer',
+        'LG Electronics',
       )
-      .setCharacteristic(this.platform.Characteristic.Model, 'Default-Model')
       .setCharacteristic(
-        this.platform.Characteristic.SerialNumber,
-        'Default-Serial',
+        this.platform.Characteristic.Model,
+        this.getDevice()?.modelName || 'Not available',
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.Name,
+        this.getDevice()?.alias || 'Not available',
       )
 
     // get the LightBulb service if it exists, otherwise create a new LightBulb service
@@ -66,13 +76,6 @@ export class ExamplePlatformAccessory {
     // To avoid "Cannot add a Service with the same UUID another Service without also defining a unique 'subtype' property." error,
     // when creating multiple services of the same type, you need to use the following syntax to specify a name and subtype id:
     // this.accessory.getService('NAME') ?? this.accessory.addService(this.platform.Service.Lightbulb, 'NAME', 'USER_DEFINED_SUBTYPE');
-
-    // set the service name, this is what is displayed as the default name on the Home app
-    // in this example we are using the name we stored in the `accessory.context` in the `discoverDevices` method.
-    this.service.setCharacteristic(
-      this.platform.Characteristic.Name,
-      accessory.context.device.exampleDisplayName,
-    )
 
     // each service must implement at-minimum the "required characteristics" for the given service type
     // see https://developers.homebridge.io/#/service/Lightbulb
@@ -132,7 +135,7 @@ export class ExamplePlatformAccessory {
     }
 
     try {
-      const device = await this.platform.thinqApi.getDevice(this.getDeviceId())
+      const device = await this.platform.thinqApi.getDevice(this.getDeviceId()!)
 
       this.cachedState.power = powerStateFromValue(
         ('' + device.result.snapshot['airState.operation']) as '1' | '0',
@@ -193,7 +196,7 @@ export class ExamplePlatformAccessory {
     }
 
     this.platform.thinqApi
-      .setPower(this.getDeviceId(), powerState)
+      .setPower(this.getDeviceId()!, powerState)
       .then(() => {
         this.cachedState.power = powerState
         callback(null)
