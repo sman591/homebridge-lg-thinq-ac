@@ -6,21 +6,58 @@
 </p>
 
 
-# Homebridge Platform Plugin Template
+# homebridge-lg-thinq-ac
 
-This is a template Homebridge platform plugin and can be used as a base to help you get started developing your own plugin.
+[Homebridge](https://homebridge.io) plugin for LG ThinQ-enabled portable air conditioners.
 
-This template should be use in conjunction with the [developer documentation](https://developers.homebridge.io/). A full list of all supported service types, and their characteristics is available on this site.
+**WARNING:** This has only been tested with the [LP1419IVSM](https://www.lg.com/us/air-conditioners/lg-LP1419IVSM-portable-air-conditioner) model. This may not work with other models.
 
-## Clone As Template
+## Installation guide
 
-Click the link below to create a new GitHub Repository using this template, or click the *Use This Template* button above.
+1. **Mobile app setup**
+    * Set up the air conditioner using the "LG ThinQ" app ([iOS](https://apps.apple.com/us/app/lg-thinq/id993504342) | [Google Play](https://play.google.com/store/apps/details?id=com.lgeha.nuts&hl=en_US))
+    * Ensure the air conditioner shows up in the app and responds to controls
 
-<span align="center">
+2. **Install the homebridge plugin**
+    * `sudo npm -g i homebridge-lg-thinq-ac`
 
-### [Create New Repository From Template](https://github.com/homebridge/homebridge-plugin-template/generate)
+3. **Add platform to config.json**
+    * *I highly recommend using [homebridge-config-ui-x](https://github.com/oznu/homebridge-config-ui-x) to make these changes*
+    * Add the following to your config (or merge with the `platforms` array if it exists):
 
-</span>
+    ```
+    {
+      "platforms": [
+        {
+          "platform": "LgThinqAirConditioner",
+        }
+      ]
+    }
+   ```
+
+4. **Restart Homebridge**
+
+5. **Log into your LG account**
+    * Wait for Homebridge to start back up.
+    * In the Homebridge Config UI, click the "Plugins" tab.
+    * In the list of plugins, click "Settings" under "LG ThinQ Air Conditioner"
+    * In the modal that pops up, find "Login URL". Copy & paste this URL into another browser tab.
+    * Log into your LG account. You should be redirected to a blank page.
+    * On the blank page, copy the URL address of that page and close the tab
+
+6. **Paste back the returned URL**
+    * Keeping the URL you copied at the end of Step 5, open the Homebridge Config UI
+    * In the plugin settings, paste the URL into "Redirected URL"
+    * Click "Save" and restart Homebridge
+
+7. **Try it out!**
+    * Wait for Homebridge to start back up
+    * Open HomeKit on your device! You should now see your air conditioner pop up.
+
+## Debugging
+
+* If you have issues, review the Homebridge logs (found on the "status" page of the Homebridge Config UI).
+* If you see `400` errors or otherwise suspect auth/login issues, clear all config values for the plugin, restart Homebridge, and follow the installation guide again.
 
 ## Setup Development Environment
 
@@ -35,28 +72,6 @@ Using a terminal, navigate to the project folder and run this command to install
 ```
 npm install
 ```
-
-## Update package.json
-
-Open the [`package.json`](./package.json) and change the following attributes:
-
-* `name` - this should be prefixed with `homebridge-` or `@username/homebridge-` and contain no spaces or special characters apart from a dashes
-* `displayName` - this is the "nice" name displayed in the Homebridge UI
-* `repository.url` - Link to your GitHub repo
-* `bugs.url` - Link to your GitHub repo issues page
-
-When you are ready to publish the plugin you should set `private` to false, or remove the attribute entirely.
-
-## Update Plugin Defaults
-
-Open the [`src/settings.ts`](./src/settings.ts) file and change the default values:
-
-* `PLATFORM_NAME` - Set this to be the name of your platform. This is the name of the platform that users will use to register the plugin in the Homebridge `config.json`.
-* `PLUGIN_NAME` - Set this to be the same name you set in the [`package.json`](./package.json) file. 
-
-Open the [`config.schema.json`](./config.schema.json) file and change the following attribute:
-
-* `pluginAlias` - set this to match the `PLATFORM_NAME` you defined in the previous step.
 
 ## Build Plugin
 
