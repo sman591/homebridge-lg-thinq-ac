@@ -1,3 +1,5 @@
+import { Characteristic } from 'homebridge'
+
 const powerStateValueMap = {
   on: '1',
   off: '0',
@@ -17,6 +19,17 @@ export function powerStateFromValue(
     }
   }
   throw new Error('invalid')
+}
+export function activeFromPowerState(
+  powerState: keyof typeof powerStateValueMap,
+) {
+  switch (powerState) {
+    case 'on':
+      return Characteristic.Active.ACTIVE
+    case 'off':
+    default:
+      return Characteristic.Active.INACTIVE
+  }
 }
 
 const modeValueMap = {
@@ -40,6 +53,34 @@ export function modeFromValue(
   }
   throw new Error('invalid')
 }
+export function currentHeaterCoolerStateFromMode(
+  mode: keyof typeof modeValueMap,
+) {
+  switch (mode) {
+    case 'cool':
+      return Characteristic.CurrentHeaterCoolerState.COOLING
+    case 'dry':
+      return Characteristic.CurrentHeaterCoolerState.HEATING
+    case 'fan':
+      return Characteristic.CurrentHeaterCoolerState.IDLE
+    default:
+      return Characteristic.CurrentHeaterCoolerState.INACTIVE
+  }
+}
+export function targetHeaterCoolerStateFromMode(
+  mode: keyof typeof modeValueMap,
+) {
+  switch (mode) {
+    case 'cool':
+      return Characteristic.TargetHeaterCoolerState.COOL
+    case 'dry':
+      return Characteristic.TargetHeaterCoolerState.HEAT
+    case 'fan':
+      return Characteristic.TargetHeaterCoolerState.AUTO
+    default:
+      return Characteristic.TargetHeaterCoolerState.AUTO
+  }
+}
 
 const fanValueMap = {
   low: '2',
@@ -59,4 +100,15 @@ export function fanFromValue(
     }
   }
   throw new Error('invalid')
+}
+export function rotationSpeedFromFan(fan: keyof typeof fanValueMap) {
+  switch (fan) {
+    case 'high':
+      return 100
+    case 'medium':
+      return 50
+    case 'low':
+    default:
+      return 0
+  }
 }

@@ -4,11 +4,18 @@ import type {
   PlatformAccessory,
   CharacteristicValue,
   CharacteristicSetCallback,
-  CharacteristicGetCallback,
 } from 'homebridge'
 
 import { ExampleHomebridgePlatform } from './platform'
-import { powerStateFromValue, modeFromValue } from './thinq/convert'
+import {
+  powerStateFromValue,
+  modeFromValue,
+  activeFromPowerState,
+  currentHeaterCoolerStateFromMode,
+  targetHeaterCoolerStateFromMode,
+  rotationSpeedFromFan,
+  fanFromValue,
+} from './thinq/convert'
 import { GetDashboardResponse } from './thinq/apiTypes'
 
 type Unpacked<T> = T extends (infer U)[] ? U : T
@@ -18,6 +25,7 @@ type cachedStateConfig = {
   currentTemperature: number | null
   targetTemperature: number | null
   mode: 'cool' | 'dry' | 'fan' | null
+  fan: 'low' | 'medium' | 'high' | null
 }
 
 /**
@@ -37,6 +45,7 @@ export class ExamplePlatformAccessory {
     currentTemperature: null,
     targetTemperature: null,
     mode: null,
+    fan: null,
   }
 
   getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
@@ -83,7 +92,7 @@ export class ExamplePlatformAccessory {
     // create handlers for required characteristics
     this.service
       .getCharacteristic(this.platform.Characteristic.Active)
-      .on(CharacteristicEventTypes.GET, this.handleActiveGet.bind(this))
+      // .on(CharacteristicEventTypes.GET, this.handleActiveGet.bind(this))
       .on(CharacteristicEventTypes.SET, this.handleActiveSet.bind(this))
 
     // this.service
@@ -137,6 +146,7 @@ export class ExamplePlatformAccessory {
     try {
       const device = await this.platform.thinqApi.getDevice(this.getDeviceId()!)
 
+      // Store a cache of the state
       this.cachedState.power = powerStateFromValue(
         ('' + device.result.snapshot['airState.operation']) as '1' | '0',
       )
@@ -147,19 +157,13 @@ export class ExamplePlatformAccessory {
       this.cachedState.mode = modeFromValue(
         ('' + device.result.snapshot['airState.opMode']) as '0' | '1' | '2',
       )
+      this.cachedState.fan = fanFromValue(
+        // eslint-disable-next-line prettier/prettier
+        ('' + device.result.snapshot['airState.windStrength']) as | '2' | '4' | '6',
+      )
 
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.Active,
-        this.cachedState.power === 'on' ? 1 : 0,
-      )
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.CurrentTemperature,
-        this.cachedState.currentTemperature,
-      )
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.CoolingThresholdTemperature,
-        this.cachedState.targetTemperature,
-      )
+      // Emit updates to homebridge
+      this.updateCharacteristicsFromState()
 
       this.platform.log.debug('Pushed updates to HomeKit', this.cachedState)
     } catch (error) {
@@ -167,14 +171,51 @@ export class ExamplePlatformAccessory {
     }
   }
 
-  handleActiveGet(callback: CharacteristicGetCallback) {
-    this.platform.log.debug('Triggered GET Active')
-
-    // set this to a valid value for Active
-    const currentValue = this.cachedState.power === 'on' ? 1 : 0
-
-    callback(null, currentValue)
+  updateCharacteristicsFromState() {
+    if (this.cachedState.power) {
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.Active,
+        activeFromPowerState(this.cachedState.power),
+      )
+    }
+    if (this.cachedState.currentTemperature) {
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.CurrentTemperature,
+        this.cachedState.currentTemperature,
+      )
+    }
+    if (this.cachedState.targetTemperature) {
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.CoolingThresholdTemperature,
+        this.cachedState.targetTemperature,
+      )
+    }
+    if (this.cachedState.mode) {
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.CurrentHeaterCoolerState,
+        currentHeaterCoolerStateFromMode(this.cachedState.mode),
+      )
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.TargetHeaterCoolerState,
+        targetHeaterCoolerStateFromMode(this.cachedState.mode),
+      )
+    }
+    if (this.cachedState.fan) {
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.RotationSpeed,
+        rotationSpeedFromFan(this.cachedState.fan),
+      )
+    }
   }
+
+  // handleActiveGet(callback: CharacteristicGetCallback) {
+  //   this.platform.log.debug('Triggered GET Active')
+
+  //   // set this to a valid value for Active
+  //   const currentValue = this.cachedState.power === 'on' ? 1 : 0
+
+  //   callback(null, currentValue)
+  // }
 
   handleActiveSet(
     value: CharacteristicValue,
