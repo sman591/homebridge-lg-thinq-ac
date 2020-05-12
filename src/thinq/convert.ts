@@ -1,5 +1,3 @@
-import { Characteristic } from 'homebridge'
-
 const powerStateValueMap = {
   on: '1',
   off: '0',
@@ -25,10 +23,14 @@ export function activeFromPowerState(
 ) {
   switch (powerState) {
     case 'on':
-      return Characteristic.Active.ACTIVE
+      // TODO: Refactor out of convert
+      // Characteristic.Active.ACTIVE
+      return 1
     case 'off':
     default:
-      return Characteristic.Active.INACTIVE
+      // TODO: Refactor out of convert
+      // Characteristic.Active.INACTIVE
+      return 0
   }
 }
 
@@ -58,13 +60,21 @@ export function currentHeaterCoolerStateFromMode(
 ) {
   switch (mode) {
     case 'cool':
-      return Characteristic.CurrentHeaterCoolerState.COOLING
+      // TODO: Refactor out of convert
+      // Characteristic.CurrentHeaterCoolerState.COOLING
+      return 3
     case 'dry':
-      return Characteristic.CurrentHeaterCoolerState.HEATING
+      // TODO: Refactor out of convert
+      // Characteristic.CurrentHeaterCoolerState.HEATING
+      return 2
     case 'fan':
-      return Characteristic.CurrentHeaterCoolerState.IDLE
+      // TODO: Refactor out of convert
+      // Characteristic.CurrentHeaterCoolerState.IDLE
+      return 1
     default:
-      return Characteristic.CurrentHeaterCoolerState.INACTIVE
+      // TODO: Refactor out of convert
+      // Characteristic.CurrentHeaterCoolerState.INACTIVE
+      return 0
   }
 }
 export function targetHeaterCoolerStateFromMode(
@@ -72,13 +82,21 @@ export function targetHeaterCoolerStateFromMode(
 ) {
   switch (mode) {
     case 'cool':
-      return Characteristic.TargetHeaterCoolerState.COOL
+      // TODO: Refactor out of convert
+      // Characteristic.TargetHeaterCoolerState.COOL
+      return 2
     case 'dry':
-      return Characteristic.TargetHeaterCoolerState.HEAT
+      // TODO: Refactor out of convert
+      // Characteristic.TargetHeaterCoolerState.HEAT
+      return 1
     case 'fan':
-      return Characteristic.TargetHeaterCoolerState.AUTO
+      // TODO: Refactor out of convert
+      // Characteristic.TargetHeaterCoolerState.AUTO
+      return 0
     default:
-      return Characteristic.TargetHeaterCoolerState.AUTO
+      // TODO: Refactor out of convert
+      // Characteristic.TargetHeaterCoolerState.AUTO
+      return 0
   }
 }
 

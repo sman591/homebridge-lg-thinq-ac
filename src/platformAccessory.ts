@@ -1,4 +1,4 @@
-import { CharacteristicEventTypes, Characteristic } from 'homebridge'
+import { CharacteristicEventTypes } from 'homebridge'
 import type {
   Service,
   PlatformAccessory,
@@ -244,13 +244,13 @@ export class ExamplePlatformAccessory {
 
     let mode: 'cool' | 'dry' | 'fan'
     switch (value) {
-      case Characteristic.TargetHeaterCoolerState.COOL:
+      case this.platform.Characteristic.TargetHeaterCoolerState.COOL:
         mode = 'cool'
         break
-      case Characteristic.TargetHeaterCoolerState.HEAT:
+      case this.platform.Characteristic.TargetHeaterCoolerState.HEAT:
         mode = 'dry'
         break
-      case Characteristic.TargetHeaterCoolerState.AUTO:
+      case this.platform.Characteristic.TargetHeaterCoolerState.AUTO:
       default:
         mode = 'fan'
     }

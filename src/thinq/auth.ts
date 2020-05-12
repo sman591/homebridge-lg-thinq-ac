@@ -5,7 +5,7 @@ import querystring from 'querystring'
 import { URL } from 'url'
 
 import { generateTokenSignatureTimestamp, generateTimestamp } from './authUtils'
-import { Logger } from 'homebridge'
+import type { Logger } from 'homebridge'
 
 const THINQ_CLIENT_ID = 'LGAO221A02'
 const THINQ_SECRET_KEY = 'c053c2a6ddeb7ad97cb0eed0dcb31cf8'
