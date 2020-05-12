@@ -99,7 +99,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     const thinqConfig: ThinqConfig = {
       apiBaseUri: gatewayUri.result.thinq2Uri,
       accessTokenUri: `https://${partialThinqConfig.countryCode.toLowerCase()}.lgeapi.com/oauth/1.0/oauth2/token`,
-      redirectUri: `${gatewayUri.result.empUri}/login/iabClose`,
+      redirectUri: `https://kr.m.lgaccount.com/login/iabClose`,
       authorizationUri: `${gatewayUri.result.empSpxUri}/login/signIn`,
       countryCode: partialThinqConfig.countryCode,
       languageCode: partialThinqConfig.languageCode,
