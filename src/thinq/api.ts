@@ -4,15 +4,30 @@ import {
   GetDeviceResponse,
   GenericResponse,
   GetDashboardResponse,
+  GetGatewayUriResponse,
+  ApiHeaders,
 } from './apiTypes'
 import { valueFromPowerState, valueFromMode, valueFromFan } from './convert'
 import ThinqAuth from './auth'
+import { PartialThinqConfig, ThinqConfig } from './thinqConfig'
 
 export default class ThinqApi {
-  thinqAuth: ThinqAuth
+  readonly thinqConfig: ThinqConfig
+  readonly thinqAuth: ThinqAuth
 
-  constructor(thinqAuth: ThinqAuth) {
+  constructor(thinqConfig: ThinqConfig, thinqAuth: ThinqAuth) {
+    this.thinqConfig = thinqConfig
     this.thinqAuth = thinqAuth
+  }
+
+  static async getGatewayUri(thinqConfig: PartialThinqConfig) {
+    const response = await axios({
+      method: 'GET',
+      responseType: 'json',
+      url: `https://route.lgthinq.com:46030/v1/service/application/gateway-uri`,
+      headers: this.generateHeaders(thinqConfig),
+    })
+    return response.data as GetGatewayUriResponse
   }
 
   getIsLoggedIn() {
@@ -23,7 +38,7 @@ export default class ThinqApi {
     const response = await axios({
       method: 'GET',
       responseType: 'json',
-      url: `https://aic-service.lgthinq.com:46030/v1/service/application/dashboard`,
+      url: `${this.thinqConfig.apiBaseUri}/service/application/dashboard`,
       headers: this.generateHeaders(),
     })
     return response.data as GetDashboardResponse
@@ -33,7 +48,7 @@ export default class ThinqApi {
     const response = await axios({
       method: 'GET',
       responseType: 'json',
-      url: `https://aic-service.lgthinq.com:46030/v1/service/devices/${deviceId}`,
+      url: `${this.thinqConfig.apiBaseUri}/service/devices/${deviceId}`,
       headers: this.generateHeaders(),
     })
     return response.data as GetDeviceResponse
@@ -84,7 +99,7 @@ export default class ThinqApi {
     const response = await axios({
       method: 'POST',
       responseType: 'json',
-      url: `https://aic-service.lgthinq.com:46030/v1/service/devices/${deviceId}/control-sync`,
+      url: `${this.thinqConfig.apiBaseUri}/service/devices/${deviceId}/control-sync`,
       headers: this.generateHeaders(),
       data: {
         dataKey,
@@ -96,26 +111,36 @@ export default class ThinqApi {
     return response.data as GenericResponse
   }
 
-  private generateHeaders() {
-    return {
+  static generateHeaders(
+    thinqPartialConfig: PartialThinqConfig,
+    thinqAuth?: ThinqAuth,
+  ): ApiHeaders {
+    const headers: ApiHeaders = {
       'X-Thinq-App-Ver': '3.0.2100',
       'X-Thinq-App-Type': 'NUTS',
-      'X-Language-Code': 'en-US',
+      'X-Language-Code': thinqPartialConfig.languageCode,
       'X-Client-Id':
         'dda6bf26a674a02bc1e8612e9884b2253fda2b2fbc57b47702a80011b72f02ca',
       'X-Thinq-App-Level': 'PRD',
-      'X-User-No': this.thinqAuth.userNumber,
       'X-Service-Code': 'SVC202',
-      'Accept-Language': 'en-us',
+      'Accept-Language': thinqPartialConfig.languageCode,
       'X-Message-Id': '89ZfpKmsH8qXUmar7uQkX.',
-      'X-Emp-Token': this.thinqAuth.accessToken,
       Accept: 'application/json',
       'Content-Type': 'application/json;charset=UTF-8',
       'X-Api-Key': 'VGhpblEyLjAgU0VSVklDRQ==',
       'X-Thinq-App-Os': 'IOS',
-      'X-Country-Code': 'US',
+      'X-Country-Code': thinqPartialConfig.countryCode,
       'X-Service-Phase': 'OP',
       'Accept-Encoding': 'gzip',
     }
+    if (thinqAuth) {
+      headers['X-User-No'] = thinqAuth.userNumber
+      headers['X-Emp-Token'] = thinqAuth.accessToken
+    }
+    return headers
+  }
+
+  generateHeaders() {
+    return ThinqApi.generateHeaders(this.thinqConfig, this.thinqAuth)
   }
 }

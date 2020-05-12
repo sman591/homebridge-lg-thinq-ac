@@ -130,7 +130,7 @@ export class ExamplePlatformAccessory {
   }
 
   async updateCharacteristics() {
-    if (!this.platform.thinqApi.getIsLoggedIn()) {
+    if (!this.platform.thinqApi?.getIsLoggedIn()) {
       this.platform.log.debug('Not logged in; skipping updateCharacteristics()')
       return
     }
@@ -206,6 +206,10 @@ export class ExamplePlatformAccessory {
     callback: CharacteristicSetCallback,
   ) {
     this.platform.log.debug('Triggered SET Active:', value)
+    if (!this.platform.thinqApi) {
+      this.platform.log.error('API not initialized yet')
+      return
+    }
 
     const powerState = Number(value) === 1 ? 'on' : 'off'
 
@@ -241,6 +245,10 @@ export class ExamplePlatformAccessory {
     callback: CharacteristicSetCallback,
   ) {
     this.platform.log.debug('Triggered SET Heater Cooler State:', value)
+    if (!this.platform.thinqApi) {
+      this.platform.log.error('API not initialized yet')
+      return
+    }
 
     let mode: 'cool' | 'dry' | 'fan'
     switch (value) {
@@ -286,6 +294,10 @@ export class ExamplePlatformAccessory {
       'Triggered SET Cooling Threshold Temperature:',
       value,
     )
+    if (!this.platform.thinqApi) {
+      this.platform.log.error('API not initialized yet')
+      return
+    }
 
     let targetTemperature: number
     try {
@@ -335,6 +347,10 @@ export class ExamplePlatformAccessory {
     callback: CharacteristicSetCallback,
   ) {
     this.platform.log.debug('Triggered SET Rotation Speed:', value)
+    if (!this.platform.thinqApi) {
+      this.platform.log.error('API not initialized yet')
+      return
+    }
 
     const numberValue = Number(value)
 

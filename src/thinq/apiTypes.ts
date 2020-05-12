@@ -155,3 +155,68 @@ export type GetDashboardResponse = {
     group: []
   }
 }
+
+export type GetGatewayUriResponse = {
+  resultCode: string
+  result: {
+    countryCode: string
+    languageCode: string
+    thinq1Uri: string
+    thinq2Uri: string
+    empUri: string
+    empSpxUri: string
+    rtiUri: string
+    mediaUri: string
+    appLatestVer: string
+    appUpdateYn: string
+    appLink: string
+    nestSupportAppVer: string
+    uuidLoginYn: string
+    lineLoginYn: string
+    lineChannelId: string
+    cicTel: string
+    cicUri: string
+    isSupportVideoYn: string
+    countryLangDescription: string
+    googleAssistantUri: string
+    smartWorldUri: string
+    racUri: string
+    cssUri: string
+    cssWebUri: string
+    iotssUri: string
+    amazonDrsYn: string
+    features: {
+      amazonDrs: string
+      pccPushProd: string
+      disableWeatherCard: string
+      thinqCss: string
+      cicSupport: string
+      pccPush: string
+      qrRegisterYn: string
+      pccWarrantyProd: string
+      pccWarranty: string
+    }
+    serviceCards: Array<Record<string, unknown>>
+  }
+}
+
+export type ApiHeaders = {
+  'X-Thinq-App-Ver': string
+  'X-Thinq-App-Type': string
+  'X-Language-Code': string
+  'X-Client-Id': string
+  'X-Thinq-App-Level': string
+  'X-Service-Code': string
+  'Accept-Language': string
+  'X-Message-Id': string
+  Accept: string
+  'Content-Type': string
+  'X-Api-Key': string
+  'X-Thinq-App-Os': string
+  'X-Country-Code': string
+  'X-Service-Phase': string
+  'Accept-Encoding': string
+
+  'X-User-No'?: string
+  'X-Emp-Token'?: string
+}

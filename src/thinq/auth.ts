@@ -6,6 +6,7 @@ import { URL } from 'url'
 
 import { generateTokenSignatureTimestamp, generateTimestamp } from './authUtils'
 import type { Logger } from 'homebridge'
+import { ThinqConfig } from './thinqConfig'
 
 const THINQ_CLIENT_ID = 'LGAO221A02'
 const THINQ_SECRET_KEY = 'c053c2a6ddeb7ad97cb0eed0dcb31cf8'
@@ -19,9 +20,9 @@ export type ThinqAuthConfig = {
 }
 
 export default class ThinqAuth {
-  private log: Logger
-  private accessTokenUri: string
-  private redirectUri: string
+  private readonly log: Logger
+  private readonly thinqConfig: ThinqConfig
+
   private auth: ClientOAuth2
   private token?: ClientOAuth2.Token
 
@@ -32,22 +33,29 @@ export default class ThinqAuth {
     return this.token?.accessToken
   }
 
-  constructor(logger: Logger, state?: string) {
+  constructor(logger: Logger, thinqConfig: ThinqConfig, state?: string) {
     this.log = logger
     this.authState = state || uuidv4()
-    this.accessTokenUri = 'https://us.lgeapi.com/oauth/1.0/oauth2/token'
-    this.redirectUri = 'https://kr.m.lgaccount.com/login/iabClose'
+    this.thinqConfig = thinqConfig
     this.auth = new ClientOAuth2({
       clientId: THINQ_CLIENT_ID,
-      redirectUri: this.redirectUri,
-      accessTokenUri: this.accessTokenUri,
-      authorizationUri: 'https://us.m.lgaccount.com/spx/login/signIn',
+      redirectUri: this.thinqConfig.redirectUri,
+      accessTokenUri: this.thinqConfig.accessTokenUri,
+      authorizationUri: this.thinqConfig.authorizationUri,
       state: this.authState,
     })
   }
 
-  static fromConfig(logger: Logger, existingConfig: ThinqAuthConfig) {
-    const instance = new ThinqAuth(logger, existingConfig.auth_login_state)
+  static fromConfig(
+    logger: Logger,
+    thinqConfig: ThinqConfig,
+    existingConfig: ThinqAuthConfig,
+  ) {
+    const instance = new ThinqAuth(
+      logger,
+      thinqConfig,
+      existingConfig.auth_login_state,
+    )
     if (
       existingConfig.auth_access_token &&
       existingConfig.auth_refresh_token &&
@@ -87,7 +95,7 @@ export default class ThinqAuth {
       client_id: THINQ_CLIENT_ID,
       code: parsedUrlRedirectedTo.searchParams.get('code') as string,
       grant_type: 'authorization_code',
-      redirect_uri: this.redirectUri,
+      redirect_uri: this.thinqConfig.redirectUri,
     }
     try {
       this.token = await this.auth.code.getToken(urlRedirectedTo, {
@@ -120,7 +128,7 @@ export default class ThinqAuth {
   }
 
   private lgeOauthHeaders(alphaSortedBodyParams: Record<string, string>) {
-    const parsedRequestUrl = new URL(this.accessTokenUri)
+    const parsedRequestUrl = new URL(this.thinqConfig.accessTokenUri)
     const query = querystring.stringify(alphaSortedBodyParams)
     // NOTE: This is the URL that auth.getToken() will make a request to + a query-string-ified version of its body
     const requestUrl = `${parsedRequestUrl.pathname}?${query}`
@@ -135,7 +143,7 @@ export default class ThinqAuth {
       'x-lge-oauth-signature': signature,
       'x-lge-oauth-date': timestamp,
       Accept: 'application/json',
-      'Accept-Language': 'en-us',
+      'Accept-Language': this.thinqConfig.languageCode,
     }
   }
 

@@ -12,6 +12,7 @@ import { PLATFORM_NAME, PLUGIN_NAME } from './settings'
 import { ExamplePlatformAccessory } from './platformAccessory'
 import ThinqApi from './thinq/api'
 import ThinqAuth, { ThinqAuthConfig } from './thinq/auth'
+import { ThinqConfig, PartialThinqConfig } from './thinq/thinqConfig'
 
 const AUTH_REFRESH_INTERVAL = 10 * 60 * 1000 // 10 minutes
 
@@ -27,8 +28,8 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = []
 
-  public readonly thinqAuth: ThinqAuth
-  public readonly thinqApi: ThinqApi
+  public thinqAuth: ThinqAuth | undefined
+  public thinqApi: ThinqApi | undefined
 
   private didFinishLaunching: Promise<void>
   private finishedLaunching: Function | undefined
@@ -38,14 +39,12 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
-    this.thinqAuth = ThinqAuth.fromConfig(log, this.config as ThinqAuthConfig)
-    this.thinqApi = new ThinqApi(this.thinqAuth)
     this.didFinishLaunching = new Promise(
       (resolve) => (this.finishedLaunching = resolve),
     )
     this.log.debug('Finished initializing platform:', this.config.name)
 
-    this.inititializeAuth()
+    this.initialize()
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
@@ -74,27 +73,60 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     this.accessories.push(accessory)
   }
 
+  async initialize() {
+    try {
+      const thinqConfig = await this.initializeThinqConfig()
+      this.thinqAuth = ThinqAuth.fromConfig(
+        this.log,
+        thinqConfig,
+        this.config as ThinqAuthConfig,
+      )
+      this.thinqApi = new ThinqApi(thinqConfig, this.thinqAuth)
+      await this.inititializeAuth()
+      this.startRefreshTokenInterval()
+      this.discoverDevicesWhenReady()
+    } catch (error) {
+      this.log.error(error)
+    }
+  }
+
+  async initializeThinqConfig() {
+    const partialThinqConfig: PartialThinqConfig = {
+      countryCode: this.config.country_code,
+      languageCode: this.config.language_code,
+    }
+    const gatewayUri = await ThinqApi.getGatewayUri(partialThinqConfig)
+    const thinqConfig: ThinqConfig = {
+      apiBaseUri: gatewayUri.result.thinq2Uri,
+      accessTokenUri: `https://${partialThinqConfig.countryCode.toLowerCase()}.lgeapi.com/oauth/1.0/oauth2/token`,
+      redirectUri: `${gatewayUri.result.empUri}/login/iabClose`,
+      authorizationUri: `${gatewayUri.result.empSpxUri}/login/signIn`,
+      countryCode: partialThinqConfig.countryCode,
+      languageCode: partialThinqConfig.languageCode,
+    }
+    return thinqConfig
+  }
+
   async inititializeAuth() {
     this.updateAndReplaceConfig()
     const redirectedUrl = this.config.auth_redirected_url as unknown
-    if (this.thinqAuth.getIsLoggedIn()) {
+    if (this.thinqAuth?.getIsLoggedIn()) {
       this.log.info('Already logged into ThinQ')
-      this.refreshAuth().then(() => this.discoverDevicesWhenReady())
-      this.startRefreshTokenInterval()
+      await this.refreshAuth()
     } else if (typeof redirectedUrl === 'string' && redirectedUrl !== '') {
       this.log.info('Initiating auth with provided redirect URL')
       try {
-        await this.thinqAuth.processLoginResult(redirectedUrl)
-        this.startRefreshTokenInterval()
+        await this.thinqAuth!.processLoginResult(redirectedUrl)
         this.updateAndReplaceConfig()
       } catch (error) {
         this.log.error('Error setting refresh token', error)
+        throw error
       }
-      this.discoverDevicesWhenReady()
     } else {
       this.log.debug(
         'Redirected URL not stored in config and no existing auth state. Skipping initializeAuth().',
       )
+      throw new Error('Auth not ready yet, please log in.')
     }
   }
 
@@ -103,9 +135,9 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
   }
 
   private async refreshAuth() {
-    this.log.debug('Initiating refreshToken()')
+    this.log.debug('refreshAuth()')
     try {
-      await this.thinqAuth.initiateRefreshToken()
+      await this.thinqAuth!.initiateRefreshToken()
       this.updateAndReplaceConfig()
     } catch (error) {
       this.log.error(
@@ -131,12 +163,12 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
    * must not be registered again to prevent "duplicate UUID" errors.
    */
   async discoverDevices() {
-    if (!this.thinqAuth.getIsLoggedIn()) {
+    if (!this.thinqAuth?.getIsLoggedIn()) {
       this.log.info('Not logged in; skipping discoverDevices()')
       return
     }
 
-    const dashboardResponse = await this.thinqApi.getDashboard()
+    const dashboardResponse = await this.thinqApi!.getDashboard()
 
     this.log.debug('dashboardResponse', dashboardResponse)
 
@@ -220,7 +252,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
         (platform: Record<string, string>) =>
           platform.platform === 'LgThinqAirConditioner',
       )
-      const serializedAuth = this.thinqAuth.serializeToConfig()
+      const serializedAuth = this.thinqAuth!.serializeToConfig()
       for (const platform of platforms) {
         Object.assign(platform, serializedAuth)
       }

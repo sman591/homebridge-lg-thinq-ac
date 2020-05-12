@@ -5,6 +5,20 @@
   "schema": {
     "type": "object",
     "properties": {
+      "country_code": {
+        "title": "Country code",
+        "type": "string",
+        "default": "US",
+        "placehodler": "Example: US",
+        "required": true
+      },
+      "language_code": {
+        "title": "Language code",
+        "type": "string",
+        "default": "en-US",
+        "placehodler": "Example: en-US",
+        "required": true
+      },
       "auth_login_url": {
         "title": "Login URL (paste this into your browser)",
         "type": "string",

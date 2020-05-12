@@ -36,7 +36,9 @@
     {
       "platforms": [
         {
-          "platform": "LgThinqAirConditioner"
+          "platform": "LgThinqAirConditioner",
+          "country_code": "US",
+          "language_code": "en-US"
         }
       ]
     }
