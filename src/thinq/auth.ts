@@ -78,8 +78,8 @@ export default class ThinqAuth {
   getLoginUri() {
     return this.auth.code.getUri({
       query: {
-        country: 'US',
-        langauge: 'en-US',
+        country: this.thinqConfig.countryCode,
+        langauge: this.thinqConfig.languageCode,
         svc_list: 'SVC202',
         division: 'ha',
         show_thirdparty_login: 'GGL,AMZ,FBK',
