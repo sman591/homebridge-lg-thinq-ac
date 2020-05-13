@@ -1,7 +1,7 @@
 {
   "displayName": "LG ThinQ Air Conditioner",
   "name": "homebridge-lg-thinq-ac",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Homebridge plugin for LG ThinQ-enabled portable air conditioner",
   "license": "Apache-2.0",
   "repository": {
