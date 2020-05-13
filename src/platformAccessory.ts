@@ -127,6 +127,11 @@ export class ExamplePlatformAccessory {
       this.updateCharacteristics.bind(this),
       refreshInterval * 60 * 1000,
     )
+    this.renewMonitoring()
+    setInterval(
+      this.renewMonitoring.bind(this),
+      60 * 1000, // every 60 seconds
+    )
   }
 
   async updateCharacteristics() {
@@ -166,6 +171,19 @@ export class ExamplePlatformAccessory {
       this.platform.log.debug('Pushed updates to HomeKit', this.cachedState)
     } catch (error) {
       this.platform.log.error('Error during interval update', error.toString())
+    }
+  }
+
+  async renewMonitoring() {
+    if (!this.platform.thinqApi?.getIsLoggedIn()) {
+      this.platform.log.debug('Not logged in; skipping renewMonitoring()')
+      return
+    }
+    this.platform.log.debug('Renewing monitoring', this.getDeviceId())
+    try {
+      this.platform.thinqApi.sendAllEventEnable(this.getDeviceId()!)
+    } catch (error) {
+      this.platform.log.error('Error renewing monitor', error.toString())
     }
   }
 

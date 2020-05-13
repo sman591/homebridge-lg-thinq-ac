@@ -54,6 +54,22 @@ export default class ThinqApi {
     return response.data as GetDeviceResponse
   }
 
+  async sendAllEventEnable(deviceId: string) {
+    const response = await axios({
+      method: 'POST',
+      responseType: 'json',
+      url: `${this.thinqConfig.apiBaseUri}/service/devices/${deviceId}/control`,
+      headers: this.generateHeaders(),
+      data: {
+        ctrlKey: 'allEventEnable',
+        command: 'Set',
+        dataKey: 'airState.mon.timeout',
+        dataValue: '70',
+      },
+    })
+    return response.data as GenericResponse
+  }
+
   async setPower(deviceId: string, powerState: 'on' | 'off') {
     return await this.sendCommand(
       deviceId,
