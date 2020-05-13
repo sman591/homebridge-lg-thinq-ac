@@ -138,6 +138,11 @@ export class ExamplePlatformAccessory {
     try {
       this.platform.log.debug('Getting device status', this.getDeviceId())
       const device = await this.platform.thinqApi.getDevice(this.getDeviceId()!)
+      this.platform.log.debug('device response', device)
+      this.platform.log.debug(
+        'device response.result.snapshot',
+        device.result.snapshot,
+      )
 
       // Store a cache of the state
       this.cachedState.power = powerStateFromValue(

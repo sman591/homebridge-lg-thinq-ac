@@ -86,7 +86,8 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       this.startRefreshTokenInterval()
       this.discoverDevicesWhenReady()
     } catch (error) {
-      this.log.error(error)
+      this.log.error('Error initializing platform', error.toString())
+      this.log.debug(error)
     }
   }
 
@@ -239,6 +240,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     } catch (error) {
       this.log.error('Failed to parse refresh_interval from config', error)
     }
+    this.log.debug('Using fallback refresh interval')
     return fallbackDefault
   }
 
@@ -247,7 +249,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     const configString = readFileSync(configPath).toString()
     try {
       const config = JSON.parse(configString)
-      this.log.debug(config)
+      // this.log.debug('config', config) DO NOT COMMIT THIS -- it could accidentally leak into GitHub issue reports
       const platforms = config.platforms.filter(
         (platform: Record<string, string>) =>
           platform.platform === 'LgThinqAirConditioner',
@@ -258,7 +260,8 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
       }
       writeFileSync(configPath, JSON.stringify(config))
     } catch (error) {
-      this.log.error('Failed to store updated config', error)
+      this.log.error('Failed to store updated config', error.toString())
+      this.log.debug('Full error:', error)
     }
   }
 }
