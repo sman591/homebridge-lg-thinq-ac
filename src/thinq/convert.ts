@@ -16,7 +16,9 @@ export function powerStateFromValue(
       return safeKey
     }
   }
-  throw new Error('invalid')
+  throw new Error(
+    'Invalid value for powerStateFromValue: ' + JSON.stringify(value),
+  )
 }
 export function activeFromPowerState(
   powerState: keyof typeof powerStateValueMap,
@@ -53,7 +55,7 @@ export function modeFromValue(
       return safeKey
     }
   }
-  throw new Error('invalid')
+  throw new Error('Invalid value for modeFromValue: ' + JSON.stringify(value))
 }
 export function currentHeaterCoolerStateFromMode(
   mode: keyof typeof modeValueMap,
@@ -117,7 +119,7 @@ export function fanFromValue(
       return safeKey
     }
   }
-  throw new Error('invalid')
+  throw new Error('Invalid value for fanFromValue: ' + JSON.stringify(value))
 }
 export function rotationSpeedFromFan(fan: keyof typeof fanValueMap) {
   switch (fan) {
