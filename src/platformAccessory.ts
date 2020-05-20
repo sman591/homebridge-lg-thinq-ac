@@ -149,21 +149,35 @@ export class ExamplePlatformAccessory {
         device.result.snapshot,
       )
 
-      // Store a cache of the state
-      this.cachedState.power = powerStateFromValue(
-        ('' + device.result.snapshot['airState.operation']) as '1' | '0',
-      )
+      try {
+        this.cachedState.power = powerStateFromValue(
+          ('' + device.result.snapshot['airState.operation']) as '1' | '0',
+        )
+      } catch (error) {
+        this.platform.log.error('Error parsing power state', error.toString())
+      }
+
       this.cachedState.currentTemperature =
         device.result.snapshot['airState.tempState.current']
       this.cachedState.targetTemperature =
         device.result.snapshot['airState.tempState.target']
-      this.cachedState.mode = modeFromValue(
-        ('' + device.result.snapshot['airState.opMode']) as '0' | '1' | '2',
-      )
-      this.cachedState.fan = fanFromValue(
-        // eslint-disable-next-line prettier/prettier
-        ('' + device.result.snapshot['airState.windStrength']) as | '2' | '4' | '6',
-      )
+
+      try {
+        this.cachedState.mode = modeFromValue(
+          ('' + device.result.snapshot['airState.opMode']) as '0' | '1' | '2',
+        )
+      } catch (error) {
+        this.platform.log.error('Error parsing mode', error.toString())
+      }
+
+      try {
+        this.cachedState.fan = fanFromValue(
+          // eslint-disable-next-line prettier/prettier
+          ('' + device.result.snapshot['airState.windStrength']) as '2' | '4' | '6',
+        )
+      } catch (error) {
+        this.platform.log.error('Error parsing fan speed', error.toString())
+      }
 
       // Emit updates to homebridge
       this.updateCharacteristicsFromState()
