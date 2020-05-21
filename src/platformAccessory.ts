@@ -195,7 +195,7 @@ export class ExamplePlatformAccessory {
     }
     this.platform.log.debug('Renewing monitoring', this.getDeviceId())
     try {
-      this.platform.thinqApi.sendAllEventEnable(this.getDeviceId()!)
+      await this.platform.thinqApi.sendAllEventEnable(this.getDeviceId()!)
     } catch (error) {
       this.platform.log.error('Error renewing monitor', error.toString())
     }
