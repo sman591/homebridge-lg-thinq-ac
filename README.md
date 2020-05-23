@@ -12,6 +12,9 @@
   <a href="https://www.npmjs.com/package/homebridge-lg-thinq-ac" target="_blank">
     <img alt="Version" src="https://img.shields.io/npm/v/homebridge-lg-thinq-ac.svg">
   </a>
+  <a href="https://github.com/sman591/homebridge-lg-thinq-ac/actions">
+    <img alt="Release" src="https://github.com/sman591/homebridge-lg-thinq-ac/workflows/Release/badge.svg">
+  </a>
 </p>
 
 
