@@ -24,7 +24,8 @@ type Unpacked<T> = T extends (infer U)[] ? U : T
 type cachedStateConfig = {
   power: 'on' | 'off' | null
   currentTemperature: number | null
-  targetTemperature: number | null
+  targetTemperatureCool: number | null
+  targetTemperatureHeat: number | null
   mode: 'cool' | 'heat' | 'fan' | null
   fan: 'low' | 'medium' | 'high' | null
 }
@@ -44,7 +45,8 @@ export class ExamplePlatformAccessory {
   private cachedState: cachedStateConfig = {
     power: null,
     currentTemperature: null,
-    targetTemperature: null,
+    targetTemperatureCool: null,
+    targetTemperatureHeat: null,
     mode: null,
     fan: null,
   }
@@ -112,6 +114,15 @@ export class ExamplePlatformAccessory {
       )
 
     this.service
+      .getCharacteristic(
+        this.platform.Characteristic.HeatingThresholdTemperature,
+      )
+      .on(
+        CharacteristicEventTypes.SET,
+        debounce(this.handleTargetHeatingThresholdTemperature.bind(this), 1000),
+      )
+
+    this.service
       .getCharacteristic(this.platform.Characteristic.RotationSpeed)
       .on(
         CharacteristicEventTypes.SET,
@@ -157,17 +168,36 @@ export class ExamplePlatformAccessory {
         this.platform.log.error('Error parsing power state', error.toString())
       }
 
-      this.cachedState.currentTemperature =
-        device.result.snapshot['airState.tempState.current']
-      this.cachedState.targetTemperature =
-        device.result.snapshot['airState.tempState.target']
-
       try {
         this.cachedState.mode = modeFromValue(
           ('' + device.result.snapshot['airState.opMode']) as '0' | '1' | '2',
         )
       } catch (error) {
         this.platform.log.error('Error parsing mode', error.toString())
+      }
+
+      this.cachedState.currentTemperature =
+        device.result.snapshot['airState.tempState.current']
+
+      const targetTemperatureUnknown =
+        device.result.snapshot['airState.tempState.target']
+      switch (this.cachedState.mode) {
+        case 'fan':
+          this.platform.log.debug(
+            'Mode is "fan", ignoring target temperature value.',
+          )
+          break
+        case 'heat':
+          this.cachedState.targetTemperatureHeat = targetTemperatureUnknown
+          break
+        case 'cool':
+          this.cachedState.targetTemperatureCool = targetTemperatureUnknown
+          break
+        default:
+          this.platform.log.error(
+            'Mode is unknown. Assuming target temperature is for "cool" mode.',
+          )
+          this.cachedState.targetTemperatureCool = targetTemperatureUnknown
       }
 
       try {
@@ -214,10 +244,16 @@ export class ExamplePlatformAccessory {
         this.cachedState.currentTemperature,
       )
     }
-    if (this.cachedState.targetTemperature) {
+    if (this.cachedState.targetTemperatureCool) {
       this.service.updateCharacteristic(
         this.platform.Characteristic.CoolingThresholdTemperature,
-        this.cachedState.targetTemperature,
+        this.cachedState.targetTemperatureCool,
+      )
+    }
+    if (this.cachedState.targetTemperatureHeat) {
+      this.service.updateCharacteristic(
+        this.platform.Characteristic.HeatingThresholdTemperature,
+        this.cachedState.targetTemperatureHeat,
       )
     }
     if (this.cachedState.mode) {
@@ -341,7 +377,7 @@ export class ExamplePlatformAccessory {
       targetTemperature = Number(value)
     } catch (error) {
       this.platform.log.error(
-        'Could not parse temperature value',
+        'Could not parse cool temperature value',
         value,
         error.toString(),
       )
@@ -350,13 +386,13 @@ export class ExamplePlatformAccessory {
     }
 
     if (
-      targetTemperature === this.cachedState.targetTemperature ||
-      targetTemperature - Number(this.cachedState.targetTemperature) < 0.4
+      targetTemperature === this.cachedState.targetTemperatureCool ||
+      targetTemperature - Number(this.cachedState.targetTemperatureCool) < 0.4
     ) {
       // The air conditioner will make a sound every time this API is called.
       // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
       this.platform.log.debug(
-        'Target heater cooler state equals cached state. Skipping.',
+        'Target cool termperature equals cached state. Skipping.',
         targetTemperature,
       )
       callback(null, value)
@@ -366,12 +402,68 @@ export class ExamplePlatformAccessory {
     this.platform.thinqApi
       .setTemperature(this.getDeviceId()!, targetTemperature)
       .then(() => {
-        this.cachedState.targetTemperature = targetTemperature
+        this.cachedState.targetTemperatureCool = targetTemperature
         callback(null, value)
       })
       .catch((error) => {
         this.platform.log.error(
-          'Failed to set target temperature',
+          'Failed to set target cool temperature',
+          targetTemperature,
+          error,
+        )
+        callback(error)
+      })
+  }
+
+  handleTargetHeatingThresholdTemperature(
+    value: CharacteristicValue,
+    callback: CharacteristicSetCallback,
+  ) {
+    this.platform.log.debug(
+      'Triggered SET Heating Threshold Temperature:',
+      value,
+    )
+    if (!this.platform.thinqApi) {
+      this.platform.log.error('API not initialized yet')
+      return
+    }
+
+    let targetTemperature: number
+    try {
+      targetTemperature = Number(value)
+    } catch (error) {
+      this.platform.log.error(
+        'Could not parse heat temperature value',
+        value,
+        error.toString(),
+      )
+      callback(error)
+      return
+    }
+
+    if (
+      targetTemperature === this.cachedState.targetTemperatureHeat ||
+      targetTemperature - Number(this.cachedState.targetTemperatureHeat) < 0.4
+    ) {
+      // The air conditioner will make a sound every time this API is called.
+      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
+      this.platform.log.debug(
+        'Target heat termperature equals cached state. Skipping.',
+        targetTemperature,
+      )
+      callback(null, value)
+      return
+    }
+
+    this.platform.thinqApi
+      .setTemperature(this.getDeviceId()!, targetTemperature)
+      .then(() => {
+        this.cachedState.targetTemperatureHeat = targetTemperature
+        callback(null, value)
+      })
+      .catch((error) => {
+        this.platform.log.error(
+          'Failed to set target heat temperature',
           targetTemperature,
           error,
         )
