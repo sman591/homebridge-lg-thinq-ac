@@ -38,7 +38,7 @@ export function activeFromPowerState(
 
 const modeValueMap = {
   cool: '0',
-  dry: '1',
+  heat: '1',
   fan: '2',
 } as const
 export function valueFromMode(
@@ -65,7 +65,7 @@ export function currentHeaterCoolerStateFromMode(
       // TODO: Refactor out of convert
       // Characteristic.CurrentHeaterCoolerState.COOLING
       return 3
-    case 'dry':
+    case 'heat':
       // TODO: Refactor out of convert
       // Characteristic.CurrentHeaterCoolerState.HEATING
       return 2
@@ -87,7 +87,7 @@ export function targetHeaterCoolerStateFromMode(
       // TODO: Refactor out of convert
       // Characteristic.TargetHeaterCoolerState.COOL
       return 2
-    case 'dry':
+    case 'heat':
       // TODO: Refactor out of convert
       // Characteristic.TargetHeaterCoolerState.HEAT
       return 1

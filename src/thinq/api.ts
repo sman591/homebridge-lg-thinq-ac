@@ -79,7 +79,7 @@ export default class ThinqApi {
     )
   }
 
-  async setMode(deviceId: string, mode: 'fan' | 'dry' | 'cool') {
+  async setMode(deviceId: string, mode: 'fan' | 'heat' | 'cool') {
     return await this.sendCommand(
       deviceId,
       'Set',

@@ -25,7 +25,7 @@ type cachedStateConfig = {
   power: 'on' | 'off' | null
   currentTemperature: number | null
   targetTemperature: number | null
-  mode: 'cool' | 'dry' | 'fan' | null
+  mode: 'cool' | 'heat' | 'fan' | null
   fan: 'low' | 'medium' | 'high' | null
 }
 
@@ -287,13 +287,13 @@ export class ExamplePlatformAccessory {
       return
     }
 
-    let mode: 'cool' | 'dry' | 'fan'
+    let mode: 'cool' | 'heat' | 'fan'
     switch (value) {
       case this.platform.Characteristic.TargetHeaterCoolerState.COOL:
         mode = 'cool'
         break
       case this.platform.Characteristic.TargetHeaterCoolerState.HEAT:
-        mode = 'dry'
+        mode = 'heat'
         break
       case this.platform.Characteristic.TargetHeaterCoolerState.AUTO:
       default:
