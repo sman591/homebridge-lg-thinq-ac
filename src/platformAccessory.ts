@@ -119,7 +119,7 @@ export class ExamplePlatformAccessory {
       )
 
     this.updateCharacteristics()
-    const refreshInterval = this.platform.refreshIntervalMinutes()
+    const refreshInterval = this.platform.getRefreshIntervalMinutes()
     this.platform.log.info(
       `Starting refresh interval (set to ${refreshInterval} minutes)`,
     )

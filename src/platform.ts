@@ -230,7 +230,7 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
     }
   }
 
-  refreshIntervalMinutes() {
+  getRefreshIntervalMinutes() {
     const fallbackDefault = 1
     try {
       const parsedValue = parseFloat(this.config.refresh_interval)
