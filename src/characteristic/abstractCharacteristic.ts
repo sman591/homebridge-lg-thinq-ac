@@ -15,12 +15,15 @@ export default abstract class AbstractCharacteristic<
   ApiValue extends string | number | boolean | undefined | null,
   Characteristic extends typeof HomebridgeCharacteristic /** comes from this.platform.Characteristic.____ */
 > {
-  private log: InstanceType<typeof HomebridgeLgThinqPlatform>['log']
-  thinqApi: InstanceType<typeof HomebridgeLgThinqPlatform>['thinqApi']
+  private platform: HomebridgeLgThinqPlatform
   service: Service
   deviceId: string
   cachedState?: State
   characteristic: Characteristic /** comes from this.platform.Characteristic.____ */
+
+  get thinqApi() {
+    return this.platform.thinqApi
+  }
 
   constructor(
     platform: HomebridgeLgThinqPlatform,
@@ -28,8 +31,7 @@ export default abstract class AbstractCharacteristic<
     deviceId: string,
     characteristic: Characteristic,
   ) {
-    this.log = platform.log
-    this.thinqApi = platform.thinqApi
+    this.platform = platform
     this.service = service
     this.deviceId = deviceId
     this.characteristic = characteristic
@@ -56,11 +58,17 @@ export default abstract class AbstractCharacteristic<
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   logError(message: string, ...parameters: any[]) {
-    this.log.error(this.constructor.name + ': ' + message, ...parameters)
+    this.platform.log.error(
+      this.constructor.name + ': ' + message,
+      ...parameters,
+    )
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   logDebug(message: string, ...parameters: any[]) {
-    this.log.debug(this.constructor.name + ': ' + message, ...parameters)
+    this.platform.log.debug(
+      this.constructor.name + ': ' + message,
+      ...parameters,
+    )
   }
 }

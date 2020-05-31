@@ -49,22 +49,21 @@ export default class ActiveCharacteristic extends AbstractCharacteristic<
     }
   }
 
-  getApiValueFromState(): ApiValue {
-    switch (this.cachedState) {
+  getApiValueFromState(state: State): ApiValue {
+    switch (state) {
       case this.characteristic.ACTIVE:
         return 1
       case this.characteristic.INACTIVE:
         return 0
       default:
-        throw new Error(
-          'Unsupported state: ' + JSON.stringify(this.cachedState),
-        )
+        throw new Error('Unsupported state: ' + JSON.stringify(state))
     }
   }
 
   handleUpdatedSnapshot(snapshot: GetDeviceResponse['result']['snapshot']) {
     try {
       const apiValue = snapshot['airState.operation'] as ApiValue
+      this.logDebug('handleUpdatedSnapshot', apiValue)
       this.cachedState = this.getStateFromApiValue(apiValue)
       this.service.updateCharacteristic(this.characteristic, this.cachedState)
     } catch (error) {
@@ -90,7 +89,7 @@ export default class ActiveCharacteristic extends AbstractCharacteristic<
     }
 
     this.thinqApi
-      .setPower(this.deviceId, this.getApiValueFromState())
+      .setPower(this.deviceId, this.getApiValueFromState(targetState))
       .then(() => {
         this.cachedState = targetState
         callback(null, targetState)
