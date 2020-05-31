@@ -9,20 +9,19 @@ import debounce from 'lodash.debounce'
 
 import { HomebridgeLgThinqPlatform } from './platform'
 import {
-  powerStateFromValue,
   modeFromValue,
-  activeFromPowerState,
   currentHeaterCoolerStateFromMode,
   targetHeaterCoolerStateFromMode,
   rotationSpeedFromFan,
   fanFromValue,
 } from './thinq/convert'
 import { GetDashboardResponse } from './thinq/apiTypes'
+import ActiveCharacteristic from './characteristic/activeCharacteristic'
+import AbstractCharacteristic from './characteristic/abstractCharacteristic'
 
 type Unpacked<T> = T extends (infer U)[] ? U : T
 
 type cachedStateConfig = {
-  power: 'on' | 'off' | null
   currentTemperature: number | null
   targetTemperatureCool: number | null
   targetTemperatureHeat: number | null
@@ -37,13 +36,14 @@ type cachedStateConfig = {
  */
 export class LgAirConditionerPlatformAccessory {
   private service: Service
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private characteristics: Array<AbstractCharacteristic<any, any, any>>
 
   /**
    * These are just used to create a working example
    * You should implement your own code to track the state of your accessory
    */
   private cachedState: cachedStateConfig = {
-    power: null,
     currentTemperature: null,
     targetTemperatureCool: null,
     targetTemperatureHeat: null,
@@ -92,11 +92,28 @@ export class LgAirConditionerPlatformAccessory {
     // each service must implement at-minimum the "required characteristics" for the given service type
     // see https://developers.homebridge.io/#/service/Lightbulb
 
-    // create handlers for required characteristics
-    this.service
-      .getCharacteristic(this.platform.Characteristic.Active)
-      .on(CharacteristicEventTypes.SET, this.handleActiveSet.bind(this))
+    const deviceId = this.getDeviceId()!
+    this.characteristics = [
+      new ActiveCharacteristic(this.platform, this.service, deviceId),
+      // new TargetHeaterCoolerStateCharacteristic(
+      //   this.platform,
+      //   this.service,
+      //   deviceId,
+      // ),
+      // new CoolingThresholdTemperatureCharacteristic(
+      //   this.platform,
+      //   this.service,
+      //   deviceId,
+      // ),
+      // new HeatingThresholdTemperatureCharacteristic(
+      //   this.platform,
+      //   this.service,
+      //   deviceId,
+      // ),
+      // new RotationSpeedCharacteristic(this.platform, this.service, this),
+    ]
 
+    // // create handlers for required characteristics
     this.service
       .getCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState)
       .on(
@@ -160,12 +177,15 @@ export class LgAirConditionerPlatformAccessory {
         device.result.snapshot,
       )
 
-      try {
-        this.cachedState.power = powerStateFromValue(
-          ('' + device.result.snapshot['airState.operation']) as '1' | '0',
-        )
-      } catch (error) {
-        this.platform.log.error('Error parsing power state', error.toString())
+      for (const characteristic of this.characteristics) {
+        try {
+          characteristic.handleUpdatedSnapshot(device.result.snapshot)
+        } catch (error) {
+          this.platform.log.error(
+            'Error updating characteristic ' + characteristic.constructor.name,
+            error.toString(),
+          )
+        }
       }
 
       try {
@@ -232,12 +252,6 @@ export class LgAirConditionerPlatformAccessory {
   }
 
   updateCharacteristicsFromState() {
-    if (this.cachedState.power) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.Active,
-        activeFromPowerState(this.cachedState.power),
-      )
-    }
     if (this.cachedState.currentTemperature) {
       this.service.updateCharacteristic(
         this.platform.Characteristic.CurrentTemperature,
@@ -272,45 +286,6 @@ export class LgAirConditionerPlatformAccessory {
         rotationSpeedFromFan(this.cachedState.fan),
       )
     }
-  }
-
-  handleActiveSet(
-    value: CharacteristicValue,
-    callback: CharacteristicSetCallback,
-  ) {
-    this.platform.log.debug('Triggered SET Active:', value)
-    if (!this.platform.thinqApi) {
-      this.platform.log.error('API not initialized yet')
-      return
-    }
-
-    const powerState = Number(value) === 1 ? 'on' : 'off'
-
-    if (powerState === this.cachedState.power) {
-      // The air conditioner will make a sound every time this API is called.
-      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
-      this.platform.log.debug(
-        'Power state equals cached state. Skipping.',
-        powerState,
-      )
-      callback(null, value)
-      return
-    }
-
-    this.platform.thinqApi
-      .setPower(this.getDeviceId()!, powerState)
-      .then(() => {
-        this.cachedState.power = powerState
-        callback(null, value)
-      })
-      .catch((error) => {
-        this.platform.log.error(
-          'Failed to set power state',
-          powerState,
-          error.toString(),
-        )
-        callback(error)
-      })
   }
 
   handleTargetHeaterCoolerStateSet(

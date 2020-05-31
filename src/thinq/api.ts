@@ -7,7 +7,7 @@ import {
   GetGatewayUriResponse,
   ApiHeaders,
 } from './apiTypes'
-import { valueFromPowerState, valueFromMode, valueFromFan } from './convert'
+import { valueFromMode, valueFromFan } from './convert'
 import ThinqAuth from './auth'
 import { PartialThinqConfig, ThinqConfig } from './thinqConfig'
 
@@ -70,12 +70,13 @@ export default class ThinqApi {
     return response.data as GenericResponse
   }
 
-  async setPower(deviceId: string, powerState: 'on' | 'off') {
+  /** 1 is on, 0 is off */
+  async setPower(deviceId: string, powerState: 1 | 0) {
     return await this.sendCommand(
       deviceId,
       'Operation',
       'airState.operation',
-      valueFromPowerState(powerState),
+      powerState,
     )
   }
 
