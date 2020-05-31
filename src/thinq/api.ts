@@ -107,6 +107,15 @@ export default class ThinqApi {
     )
   }
 
+  async setSwingMode(deviceId: string, swingMode: 0 | 100) {
+    return await this.sendCommand(
+      deviceId,
+      'Set',
+      'airState.wDir.vStep',
+      swingMode,
+    )
+  }
+
   private async sendCommand(
     deviceId: string,
     command: 'Set' | 'Operation',

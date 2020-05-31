@@ -18,6 +18,7 @@ import {
 import { GetDashboardResponse } from './thinq/apiTypes'
 import ActiveCharacteristic from './characteristic/activeCharacteristic'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
+import SwingModeCharacteristic from './characteristic/swingModeCharacteristic'
 
 type Unpacked<T> = T extends (infer U)[] ? U : T
 
@@ -95,6 +96,7 @@ export class LgAirConditionerPlatformAccessory {
     const deviceId = this.getDeviceId()!
     this.characteristics = [
       new ActiveCharacteristic(this.platform, this.service, deviceId),
+      new SwingModeCharacteristic(this.platform, this.service, deviceId),
       // new TargetHeaterCoolerStateCharacteristic(
       //   this.platform,
       //   this.service,
