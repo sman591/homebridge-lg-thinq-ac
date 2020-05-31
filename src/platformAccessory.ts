@@ -386,8 +386,9 @@ export class ExamplePlatformAccessory {
     }
 
     if (
-      targetTemperature === this.cachedState.targetTemperatureCool ||
-      targetTemperature - Number(this.cachedState.targetTemperatureCool) < 0.4
+      Math.abs(
+        targetTemperature - Number(this.cachedState.targetTemperatureCool),
+      ) < 0.4
     ) {
       // The air conditioner will make a sound every time this API is called.
       // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
@@ -442,8 +443,9 @@ export class ExamplePlatformAccessory {
     }
 
     if (
-      targetTemperature === this.cachedState.targetTemperatureHeat ||
-      targetTemperature - Number(this.cachedState.targetTemperatureHeat) < 0.4
+      Math.abs(
+        targetTemperature - Number(this.cachedState.targetTemperatureHeat),
+      ) < 0.4
     ) {
       // The air conditioner will make a sound every time this API is called.
       // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
