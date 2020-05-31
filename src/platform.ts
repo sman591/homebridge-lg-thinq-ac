@@ -93,8 +93,10 @@ export class ExampleHomebridgePlatform implements DynamicPlatformPlugin {
 
   async initializeThinqConfig() {
     const partialThinqConfig: PartialThinqConfig = {
-      countryCode: this.config.country_code,
-      languageCode: this.config.language_code,
+      // If a user installs via the homebridge UI, these values
+      // may not be guaranteed
+      countryCode: this.config.country_code || 'US',
+      languageCode: this.config.language_code || 'en-US',
     }
     const gatewayUri = await ThinqApi.getGatewayUri(partialThinqConfig)
     const thinqConfig: ThinqConfig = {
