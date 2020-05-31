@@ -70,16 +70,6 @@ export default class ThinqApi {
     return response.data as GenericResponse
   }
 
-  /** 1 is on, 0 is off */
-  async setPower(deviceId: string, powerState: 1 | 0) {
-    return await this.sendCommand(
-      deviceId,
-      'Operation',
-      'airState.operation',
-      powerState,
-    )
-  }
-
   async setMode(deviceId: string, mode: 'fan' | 'heat' | 'cool') {
     return await this.sendCommand(
       deviceId,
@@ -107,16 +97,7 @@ export default class ThinqApi {
     )
   }
 
-  async setSwingMode(deviceId: string, swingMode: 0 | 100) {
-    return await this.sendCommand(
-      deviceId,
-      'Set',
-      'airState.wDir.vStep',
-      swingMode,
-    )
-  }
-
-  private async sendCommand(
+  async sendCommand(
     deviceId: string,
     command: 'Set' | 'Operation',
     dataKey: string,

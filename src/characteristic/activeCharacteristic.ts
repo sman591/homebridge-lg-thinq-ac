@@ -1,15 +1,7 @@
-import { CharacteristicEventTypes } from 'homebridge'
-import type {
-  Service,
-  CharacteristicGetCallback,
-  CharacteristicSetCallback,
-  Characteristic,
-  CharacteristicValue,
-} from 'homebridge'
+import type { Service, Characteristic } from 'homebridge'
 
 import { HomebridgeLgThinqPlatform } from '../platform'
 import AbstractCharacteristic from './abstractCharacteristic'
-import { GetDeviceResponse } from '../thinq/apiTypes'
 
 type State =
   | typeof Characteristic.Active.ACTIVE
@@ -27,15 +19,14 @@ export default class ActiveCharacteristic extends AbstractCharacteristic<
     service: Service,
     deviceId: string,
   ) {
-    super(platform, service, deviceId, platform.Characteristic.Active)
-    this.register()
-  }
-
-  register() {
-    this.service
-      .getCharacteristic(this.characteristic)
-      .on(CharacteristicEventTypes.SET, this.handleSet.bind(this))
-      .on(CharacteristicEventTypes.GET, this.handleGet.bind(this))
+    super(
+      platform,
+      service,
+      deviceId,
+      platform.Characteristic.Active,
+      'Operation',
+      'airState.operation',
+    )
   }
 
   getStateFromApiValue(apiValue: ApiValue): State {
@@ -58,49 +49,5 @@ export default class ActiveCharacteristic extends AbstractCharacteristic<
       default:
         throw new Error('Unsupported state: ' + JSON.stringify(state))
     }
-  }
-
-  handleUpdatedSnapshot(snapshot: GetDeviceResponse['result']['snapshot']) {
-    try {
-      const apiValue = snapshot['airState.operation'] as ApiValue
-      this.logDebug('handleUpdatedSnapshot', apiValue)
-      this.cachedState = this.getStateFromApiValue(apiValue)
-      this.service.updateCharacteristic(this.characteristic, this.cachedState)
-    } catch (error) {
-      this.logError('Error parsing state', error.toString())
-    }
-  }
-
-  handleSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    this.logDebug('Triggered SET:', value)
-    if (!this.thinqApi) {
-      this.logError('API not initialized yet')
-      return
-    }
-
-    const targetState = value as State
-
-    if (targetState === this.cachedState) {
-      // The air conditioner will make a sound every time this API is called.
-      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
-      this.logDebug('State equals cached state. Skipping.', targetState)
-      callback(null, targetState)
-      return
-    }
-
-    this.thinqApi
-      .setPower(this.deviceId, this.getApiValueFromState(targetState))
-      .then(() => {
-        this.cachedState = targetState
-        callback(null, targetState)
-      })
-      .catch((error) => {
-        this.logError('Failed to set state', targetState, error.toString())
-        callback(error)
-      })
-  }
-
-  handleGet(callback: CharacteristicGetCallback) {
-    callback(null, this.cachedState)
   }
 }
