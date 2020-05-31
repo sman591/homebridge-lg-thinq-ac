@@ -7,7 +7,7 @@ import type {
 } from 'homebridge'
 import debounce from 'lodash.debounce'
 
-import { ExampleHomebridgePlatform } from './platform'
+import { HomebridgeLgThinqPlatform } from './platform'
 import {
   powerStateFromValue,
   modeFromValue,
@@ -60,7 +60,7 @@ export class ExamplePlatformAccessory {
   }
 
   constructor(
-    private readonly platform: ExampleHomebridgePlatform,
+    private readonly platform: HomebridgeLgThinqPlatform,
     private readonly accessory: PlatformAccessory,
   ) {
     // set accessory information
