@@ -32,16 +32,19 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
   public thinqApi: ThinqApi | undefined
 
   private didFinishLaunching: Promise<void>
-  private finishedLaunching: Function | undefined
+  private handleFinishedLaunching?: () => void
 
   constructor(
     public readonly log: Logger,
     public readonly config: PlatformConfig,
     public readonly api: API,
   ) {
-    this.didFinishLaunching = new Promise(
-      (resolve) => (this.finishedLaunching = resolve),
-    )
+    this.didFinishLaunching = new Promise((resolve) => {
+      // Store the resolver locally.
+      // Steps that depend on this can `await didFinishLaunching`.
+      // When Homebridge is finishes launching, this will be called to resolve.
+      this.handleFinishedLaunching = resolve
+    })
     this.log.debug('Finished initializing platform:', this.config.name)
 
     this.initialize()
@@ -52,8 +55,8 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     // to start discovery of new accessories.
     this.api.on(APIEvent.DID_FINISH_LAUNCHING, () => {
       this.log.debug('Executed didFinishLaunching callback')
-      if (this.finishedLaunching) {
-        this.finishedLaunching()
+      if (this.handleFinishedLaunching) {
+        this.handleFinishedLaunching()
       }
     })
   }
