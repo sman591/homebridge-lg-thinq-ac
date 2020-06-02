@@ -42,7 +42,10 @@ export default class AbstractSplithresholdCharacteristic extends AbstractCharact
       'airState.tempState.target',
     )
     this.mode = mode
-    service.getCharacteristic(this.characteristic).setProps({ minStep: 0.5 })
+    service
+      .getCharacteristic(this.characteristic)
+      // min/max as defined in product manual
+      .setProps({ minValue: 16, maxValue: 30, minStep: 0.5 })
     // Usually these would be private, but this is a special characteristic
     // that needs these
     this.localPlatform = platform
