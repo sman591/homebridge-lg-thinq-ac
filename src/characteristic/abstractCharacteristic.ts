@@ -17,13 +17,13 @@ export default abstract class AbstractCharacteristic<
   ApiValue extends string | number,
   Characteristic extends WithUUID<{
     new (): HomebridgeCharacteristic
-  }> /** comes from this.platform.Characteristic.____ */
+  }> /** Comes from this.platform.Characteristic.____ */
 > {
   private platform: HomebridgeLgThinqPlatform
   private service: Service
   private deviceId: string
   private cachedState?: State
-  characteristic: Characteristic /** comes from this.platform.Characteristic.____ */
+  characteristic: Characteristic /** Comes from this.platform.Characteristic.____ */
   private apiCommand: 'Set' | 'Operation'
   private apiDataKey: keyof GetDeviceResponse['result']['snapshot']
 
@@ -80,7 +80,11 @@ export default abstract class AbstractCharacteristic<
       return
     }
 
-    const targetState = value as State
+    // Double-transform the value
+    const targetState = this.getStateFromApiValue(
+      this.getApiValueFromState(value as State),
+    )
+    this.logDebug('targetState', targetState)
 
     if (targetState === this.cachedState) {
       // The air conditioner will make a sound every time this API is called.

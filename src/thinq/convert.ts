@@ -63,34 +63,3 @@ export function targetHeaterCoolerStateFromMode(
       return 0
   }
 }
-
-const fanValueMap = {
-  low: '2',
-  medium: '4',
-  high: '6',
-} as const
-export function valueFromFan(fan: keyof typeof fanValueMap): '2' | '4' | '6' {
-  return fanValueMap[fan]
-}
-export function fanFromValue(
-  value: ReturnType<typeof valueFromFan>,
-): keyof typeof fanValueMap {
-  for (const key of Object.keys(fanValueMap)) {
-    const safeKey = key as keyof typeof fanValueMap
-    if (fanValueMap[safeKey] === value) {
-      return safeKey
-    }
-  }
-  throw new Error('Invalid value for fanFromValue: ' + JSON.stringify(value))
-}
-export function rotationSpeedFromFan(fan: keyof typeof fanValueMap) {
-  switch (fan) {
-    case 'high':
-      return 100
-    case 'medium':
-      return 66
-    case 'low':
-    default:
-      return 33
-  }
-}

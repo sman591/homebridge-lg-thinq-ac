@@ -12,13 +12,12 @@ import {
   modeFromValue,
   currentHeaterCoolerStateFromMode,
   targetHeaterCoolerStateFromMode,
-  rotationSpeedFromFan,
-  fanFromValue,
 } from './thinq/convert'
 import { GetDashboardResponse } from './thinq/apiTypes'
 import ActiveCharacteristic from './characteristic/activeCharacteristic'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
 import SwingModeCharacteristic from './characteristic/swingModeCharacteristic'
+import RotationSpeedCharacteristic from './characteristic/rotationSpeedCharacteristic'
 
 type Unpacked<T> = T extends (infer U)[] ? U : T
 
@@ -27,7 +26,6 @@ type cachedStateConfig = {
   targetTemperatureCool: number | null
   targetTemperatureHeat: number | null
   mode: 'cool' | 'heat' | 'fan' | null
-  fan: 'low' | 'medium' | 'high' | null
 }
 
 /**
@@ -49,7 +47,6 @@ export class LgAirConditionerPlatformAccessory {
     targetTemperatureCool: null,
     targetTemperatureHeat: null,
     mode: null,
-    fan: null,
   }
 
   getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
@@ -97,6 +94,7 @@ export class LgAirConditionerPlatformAccessory {
     this.characteristics = [
       new ActiveCharacteristic(this.platform, this.service, deviceId),
       new SwingModeCharacteristic(this.platform, this.service, deviceId),
+      new RotationSpeedCharacteristic(this.platform, this.service, deviceId),
       // new TargetHeaterCoolerStateCharacteristic(
       //   this.platform,
       //   this.service,
@@ -112,7 +110,6 @@ export class LgAirConditionerPlatformAccessory {
       //   this.service,
       //   deviceId,
       // ),
-      // new RotationSpeedCharacteristic(this.platform, this.service, this),
     ]
 
     // // create handlers for required characteristics
@@ -139,13 +136,6 @@ export class LgAirConditionerPlatformAccessory {
       .on(
         CharacteristicEventTypes.SET,
         debounce(this.handleTargetHeatingThresholdTemperature.bind(this), 1000),
-      )
-
-    this.service
-      .getCharacteristic(this.platform.Characteristic.RotationSpeed)
-      .on(
-        CharacteristicEventTypes.SET,
-        debounce(this.handleRotationSpeedSet.bind(this), 1000),
       )
 
     this.updateCharacteristics()
@@ -222,15 +212,6 @@ export class LgAirConditionerPlatformAccessory {
           this.cachedState.targetTemperatureCool = targetTemperatureUnknown
       }
 
-      try {
-        this.cachedState.fan = fanFromValue(
-          // eslint-disable-next-line prettier/prettier
-          ('' + device.result.snapshot['airState.windStrength']) as '2' | '4' | '6',
-        )
-      } catch (error) {
-        this.platform.log.error('Error parsing fan speed', error.toString())
-      }
-
       // Emit updates to homebridge
       this.updateCharacteristicsFromState()
 
@@ -280,12 +261,6 @@ export class LgAirConditionerPlatformAccessory {
       this.service.updateCharacteristic(
         this.platform.Characteristic.TargetHeaterCoolerState,
         targetHeaterCoolerStateFromMode(this.cachedState.mode),
-      )
-    }
-    if (this.cachedState.fan) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.RotationSpeed,
-        rotationSpeedFromFan(this.cachedState.fan),
       )
     }
   }
@@ -446,47 +421,6 @@ export class LgAirConditionerPlatformAccessory {
           targetTemperature,
           error,
         )
-        callback(error)
-      })
-  }
-
-  handleRotationSpeedSet(
-    value: CharacteristicValue,
-    callback: CharacteristicSetCallback,
-  ) {
-    this.platform.log.debug('Triggered SET Rotation Speed:', value)
-    if (!this.platform.thinqApi) {
-      this.platform.log.error('API not initialized yet')
-      return
-    }
-
-    const numberValue = Number(value)
-
-    let fan: 'low' | 'medium' | 'high'
-    if (numberValue > 75) {
-      fan = 'high'
-    } else if (numberValue > 40) {
-      fan = 'medium'
-    } else {
-      fan = 'low'
-    }
-
-    if (fan === this.cachedState.fan) {
-      // The air conditioner will make a sound every time this API is called.
-      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
-      this.platform.log.debug('Fan state equals cached state. Skipping.', fan)
-      callback(null, value)
-      return
-    }
-
-    this.platform.thinqApi
-      .setFan(this.getDeviceId()!, fan)
-      .then(() => {
-        this.cachedState.fan = fan
-        callback(null, value)
-      })
-      .catch((error) => {
-        this.platform.log.error('Failed to set fan', fan, error.toString())
         callback(error)
       })
   }
