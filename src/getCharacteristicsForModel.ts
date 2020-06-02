@@ -20,6 +20,24 @@ export default function getCharacteristicsForModel(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Array<AbstractCharacteristic<any, any, any>> {
   switch (model) {
+    case 'RAC_056905_WW':
+      return [
+        new ActiveCharacteristic(platform, service, deviceId),
+        new SwingModeCharacteristic(platform, service, deviceId),
+        new RotationSpeedCharacteristic(platform, service, deviceId, 4),
+        new CoolingThresholdTemperatureCharacteristic(
+          platform,
+          service,
+          deviceId,
+        ),
+        new HeatingThresholdTemperatureCharacteristic(
+          platform,
+          service,
+          deviceId,
+        ),
+        new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
+        new CurrentTemperatureCharacteristic(platform, service, deviceId),
+      ]
     // LW8017ERSM
     case 'WIN_056905_WW':
       return [

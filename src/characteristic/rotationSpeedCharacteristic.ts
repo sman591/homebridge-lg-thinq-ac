@@ -3,19 +3,25 @@ import type { Service, Characteristic } from 'homebridge'
 import { HomebridgeLgThinqPlatform } from '../platform'
 import AbstractCharacteristic from './abstractCharacteristic'
 
-type State = number
+const MIN_VALUE = 2
+const STEP_SIZE = 2
 
-type ApiValue = 2 | 4 | 6
+type State = number /** 0-100; 0 is "off" */
+
+type ApiValue = number /** 2, 4, 6, etc */
 
 export default class RotationSpeedCharacteristic extends AbstractCharacteristic<
   State,
   ApiValue,
   typeof Characteristic.RotationSpeed
 > {
+  numSpeeds: number
+
   constructor(
     platform: HomebridgeLgThinqPlatform,
     service: Service,
     deviceId: string,
+    numSpeeds = 3,
   ) {
     super(
       platform,
@@ -25,34 +31,22 @@ export default class RotationSpeedCharacteristic extends AbstractCharacteristic<
       'Set',
       'airState.windStrength',
     )
+    this.numSpeeds = numSpeeds
+
+    const maxValue = numSpeeds * STEP_SIZE
+    service
+      .getCharacteristic(this.characteristic)
+      // minStep 0.1 to help avoid accidentally setting state = 0.
+      // If Homekit notices a 0 value, it also sends Active = 0 to shut it off.
+      .setProps({ minValue: 0, maxValue, minStep: 0.1 })
   }
 
   getStateFromApiValue(apiValue: ApiValue): State {
-    switch (apiValue) {
-      case 2:
-        // low
-        return 33
-      case 4:
-        // medium
-        return 66
-      case 6:
-        // high
-        return 100
-      default:
-        throw new Error('Unsupported API value: ' + JSON.stringify(apiValue))
-    }
+    const normalized = Math.round(apiValue / STEP_SIZE) * STEP_SIZE
+    return Math.max(MIN_VALUE, normalized)
   }
 
   getApiValueFromState(state: State): ApiValue {
-    if (state > 90) {
-      // high
-      return 6
-    } else if (state > 40) {
-      // medium
-      return 4
-    } else {
-      // low
-      return 2
-    }
+    return this.getStateFromApiValue(state)
   }
 }
