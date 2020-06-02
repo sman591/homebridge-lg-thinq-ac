@@ -48,8 +48,14 @@ export default abstract class AbstractCharacteristic<
 
     this.service
       .getCharacteristic(this.characteristic)
-      .on(CharacteristicEventTypes.SET, this.handleSet.bind(this))
       .on(CharacteristicEventTypes.GET, this.handleGet.bind(this))
+
+    if (this.handleSet) {
+      // read-only characteristics won't have a handleSet
+      this.service
+        .getCharacteristic(this.characteristic)
+        .on(CharacteristicEventTypes.SET, this.handleSet.bind(this))
+    }
   }
 
   /** Transform Homebridge state to what the ThinQ API expects */
@@ -73,7 +79,7 @@ export default abstract class AbstractCharacteristic<
   }
 
   /** Handle a "set" command from Homebridge to update this characteristic */
-  handleSet(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+  handleSet?(value: CharacteristicValue, callback: CharacteristicSetCallback) {
     this.logDebug('Triggered SET:', value)
     if (!this.thinqApi) {
       this.logError('API not initialized yet')
