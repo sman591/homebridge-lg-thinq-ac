@@ -7,7 +7,6 @@ import {
   GetGatewayUriResponse,
   ApiHeaders,
 } from './apiTypes'
-import { valueFromMode } from './convert'
 import ThinqAuth from './auth'
 import { PartialThinqConfig, ThinqConfig } from './thinqConfig'
 
@@ -68,15 +67,6 @@ export default class ThinqApi {
       },
     })
     return response.data as GenericResponse
-  }
-
-  async setMode(deviceId: string, mode: 'fan' | 'heat' | 'cool') {
-    return await this.sendCommand(
-      deviceId,
-      'Set',
-      'airState.opMode',
-      valueFromMode(mode),
-    )
   }
 
   async sendCommand(

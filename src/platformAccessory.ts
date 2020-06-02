@@ -1,17 +1,6 @@
-import { CharacteristicEventTypes } from 'homebridge'
-import type {
-  Service,
-  PlatformAccessory,
-  CharacteristicValue,
-  CharacteristicSetCallback,
-} from 'homebridge'
+import type { Service, PlatformAccessory } from 'homebridge'
 
 import { HomebridgeLgThinqPlatform } from './platform'
-import {
-  modeFromValue,
-  currentHeaterCoolerStateFromMode,
-  targetHeaterCoolerStateFromMode,
-} from './thinq/convert'
 import { GetDashboardResponse } from './thinq/apiTypes'
 import ActiveCharacteristic from './characteristic/activeCharacteristic'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
@@ -19,12 +8,12 @@ import SwingModeCharacteristic from './characteristic/swingModeCharacteristic'
 import RotationSpeedCharacteristic from './characteristic/rotationSpeedCharacteristic'
 import CoolingThresholdTemperatureCharacteristic from './characteristic/coolingThresholdTemperatureCharacteristic'
 import HeatingThresholdTemperatureCharacteristic from './characteristic/heatingThresholdTemperatureCharacteristic'
+import TargetHeaterCoolerStateCharacteristic from './characteristic/targetHeaterCoolerStateCharacteristic'
 
 type Unpacked<T> = T extends (infer U)[] ? U : T
 
 type cachedStateConfig = {
   currentTemperature: number | null
-  mode: 'cool' | 'heat' | 'fan' | null
 }
 
 /**
@@ -43,7 +32,6 @@ export class LgAirConditionerPlatformAccessory {
    */
   private cachedState: cachedStateConfig = {
     currentTemperature: null,
-    mode: null,
   }
 
   getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
@@ -102,21 +90,14 @@ export class LgAirConditionerPlatformAccessory {
         this.service,
         deviceId,
       ),
-      // new TargetHeaterCoolerStateCharacteristic(
-      //   this.platform,
-      //   this.service,
-      //   deviceId,
-      // ),
+      new TargetHeaterCoolerStateCharacteristic(
+        this.platform,
+        this.service,
+        deviceId,
+      ),
     ]
 
     // // create handlers for required characteristics
-    this.service
-      .getCharacteristic(this.platform.Characteristic.TargetHeaterCoolerState)
-      .on(
-        CharacteristicEventTypes.SET,
-        this.handleTargetHeaterCoolerStateSet.bind(this),
-      )
-
     this.updateCharacteristics()
     const refreshInterval = this.platform.getRefreshIntervalMinutes()
     this.platform.log.info(
@@ -159,14 +140,6 @@ export class LgAirConditionerPlatformAccessory {
         }
       }
 
-      try {
-        this.cachedState.mode = modeFromValue(
-          ('' + device.result.snapshot['airState.opMode']) as '0' | '1' | '2',
-        )
-      } catch (error) {
-        this.platform.log.error('Error parsing mode', error.toString())
-      }
-
       this.cachedState.currentTemperature =
         device.result.snapshot['airState.tempState.current']
 
@@ -199,62 +172,6 @@ export class LgAirConditionerPlatformAccessory {
         this.cachedState.currentTemperature,
       )
     }
-    if (this.cachedState.mode) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.CurrentHeaterCoolerState,
-        currentHeaterCoolerStateFromMode(this.cachedState.mode),
-      )
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.TargetHeaterCoolerState,
-        targetHeaterCoolerStateFromMode(this.cachedState.mode),
-      )
-    }
-  }
-
-  handleTargetHeaterCoolerStateSet(
-    value: CharacteristicValue,
-    callback: CharacteristicSetCallback,
-  ) {
-    this.platform.log.debug('Triggered SET Heater Cooler State:', value)
-    if (!this.platform.thinqApi) {
-      this.platform.log.error('API not initialized yet')
-      return
-    }
-
-    let mode: 'cool' | 'heat' | 'fan'
-    switch (value) {
-      case this.platform.Characteristic.TargetHeaterCoolerState.COOL:
-        mode = 'cool'
-        break
-      case this.platform.Characteristic.TargetHeaterCoolerState.HEAT:
-        mode = 'heat'
-        break
-      case this.platform.Characteristic.TargetHeaterCoolerState.AUTO:
-      default:
-        mode = 'fan'
-    }
-
-    if (mode === this.cachedState.mode) {
-      // The air conditioner will make a sound every time this API is called.
-      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
-      this.platform.log.debug(
-        'Target heater cooler state equals cached state. Skipping.',
-        mode,
-      )
-      callback(null, value)
-      return
-    }
-
-    this.platform.thinqApi
-      .setMode(this.getDeviceId()!, mode)
-      .then(() => {
-        this.cachedState.mode = mode
-        callback(null, value)
-      })
-      .catch((error) => {
-        this.platform.log.error('Failed to set mode', mode, error.toString())
-        callback(error)
-      })
   }
 
   /**
