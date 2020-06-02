@@ -79,15 +79,6 @@ export default class ThinqApi {
     )
   }
 
-  async setTemperature(deviceId: string, temperatureCelcius: number) {
-    return await this.sendCommand(
-      deviceId,
-      'Set',
-      'airState.tempState.target',
-      temperatureCelcius,
-    )
-  }
-
   async sendCommand(
     deviceId: string,
     command: 'Set' | 'Operation',

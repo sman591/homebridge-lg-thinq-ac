@@ -5,7 +5,6 @@ import type {
   CharacteristicValue,
   CharacteristicSetCallback,
 } from 'homebridge'
-import debounce from 'lodash.debounce'
 
 import { HomebridgeLgThinqPlatform } from './platform'
 import {
@@ -18,13 +17,13 @@ import ActiveCharacteristic from './characteristic/activeCharacteristic'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
 import SwingModeCharacteristic from './characteristic/swingModeCharacteristic'
 import RotationSpeedCharacteristic from './characteristic/rotationSpeedCharacteristic'
+import CoolingThresholdTemperatureCharacteristic from './characteristic/coolingThresholdTemperatureCharacteristic'
+import HeatingThresholdTemperatureCharacteristic from './characteristic/heatingThresholdTemperatureCharacteristic'
 
 type Unpacked<T> = T extends (infer U)[] ? U : T
 
 type cachedStateConfig = {
   currentTemperature: number | null
-  targetTemperatureCool: number | null
-  targetTemperatureHeat: number | null
   mode: 'cool' | 'heat' | 'fan' | null
 }
 
@@ -44,8 +43,6 @@ export class LgAirConditionerPlatformAccessory {
    */
   private cachedState: cachedStateConfig = {
     currentTemperature: null,
-    targetTemperatureCool: null,
-    targetTemperatureHeat: null,
     mode: null,
   }
 
@@ -95,17 +92,17 @@ export class LgAirConditionerPlatformAccessory {
       new ActiveCharacteristic(this.platform, this.service, deviceId),
       new SwingModeCharacteristic(this.platform, this.service, deviceId),
       new RotationSpeedCharacteristic(this.platform, this.service, deviceId),
+      new CoolingThresholdTemperatureCharacteristic(
+        this.platform,
+        this.service,
+        deviceId,
+      ),
+      new HeatingThresholdTemperatureCharacteristic(
+        this.platform,
+        this.service,
+        deviceId,
+      ),
       // new TargetHeaterCoolerStateCharacteristic(
-      //   this.platform,
-      //   this.service,
-      //   deviceId,
-      // ),
-      // new CoolingThresholdTemperatureCharacteristic(
-      //   this.platform,
-      //   this.service,
-      //   deviceId,
-      // ),
-      // new HeatingThresholdTemperatureCharacteristic(
       //   this.platform,
       //   this.service,
       //   deviceId,
@@ -118,24 +115,6 @@ export class LgAirConditionerPlatformAccessory {
       .on(
         CharacteristicEventTypes.SET,
         this.handleTargetHeaterCoolerStateSet.bind(this),
-      )
-
-    this.service
-      .getCharacteristic(
-        this.platform.Characteristic.CoolingThresholdTemperature,
-      )
-      .on(
-        CharacteristicEventTypes.SET,
-        debounce(this.handleTargetCoolingThresholdTemperature.bind(this), 1000),
-      )
-
-    this.service
-      .getCharacteristic(
-        this.platform.Characteristic.HeatingThresholdTemperature,
-      )
-      .on(
-        CharacteristicEventTypes.SET,
-        debounce(this.handleTargetHeatingThresholdTemperature.bind(this), 1000),
       )
 
     this.updateCharacteristics()
@@ -191,27 +170,6 @@ export class LgAirConditionerPlatformAccessory {
       this.cachedState.currentTemperature =
         device.result.snapshot['airState.tempState.current']
 
-      const targetTemperatureUnknown =
-        device.result.snapshot['airState.tempState.target']
-      switch (this.cachedState.mode) {
-        case 'fan':
-          this.platform.log.debug(
-            'Mode is "fan", ignoring target temperature value.',
-          )
-          break
-        case 'heat':
-          this.cachedState.targetTemperatureHeat = targetTemperatureUnknown
-          break
-        case 'cool':
-          this.cachedState.targetTemperatureCool = targetTemperatureUnknown
-          break
-        default:
-          this.platform.log.error(
-            'Mode is unknown. Assuming target temperature is for "cool" mode.',
-          )
-          this.cachedState.targetTemperatureCool = targetTemperatureUnknown
-      }
-
       // Emit updates to homebridge
       this.updateCharacteristicsFromState()
 
@@ -239,18 +197,6 @@ export class LgAirConditionerPlatformAccessory {
       this.service.updateCharacteristic(
         this.platform.Characteristic.CurrentTemperature,
         this.cachedState.currentTemperature,
-      )
-    }
-    if (this.cachedState.targetTemperatureCool) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.CoolingThresholdTemperature,
-        this.cachedState.targetTemperatureCool,
-      )
-    }
-    if (this.cachedState.targetTemperatureHeat) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.HeatingThresholdTemperature,
-        this.cachedState.targetTemperatureHeat,
       )
     }
     if (this.cachedState.mode) {
@@ -307,120 +253,6 @@ export class LgAirConditionerPlatformAccessory {
       })
       .catch((error) => {
         this.platform.log.error('Failed to set mode', mode, error.toString())
-        callback(error)
-      })
-  }
-
-  handleTargetCoolingThresholdTemperature(
-    value: CharacteristicValue,
-    callback: CharacteristicSetCallback,
-  ) {
-    this.platform.log.debug(
-      'Triggered SET Cooling Threshold Temperature:',
-      value,
-    )
-    if (!this.platform.thinqApi) {
-      this.platform.log.error('API not initialized yet')
-      return
-    }
-
-    let targetTemperature: number
-    try {
-      targetTemperature = Number(value)
-    } catch (error) {
-      this.platform.log.error(
-        'Could not parse cool temperature value',
-        value,
-        error.toString(),
-      )
-      callback(error)
-      return
-    }
-
-    if (
-      Math.abs(
-        targetTemperature - Number(this.cachedState.targetTemperatureCool),
-      ) < 0.4
-    ) {
-      // The air conditioner will make a sound every time this API is called.
-      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
-      this.platform.log.debug(
-        'Target cool termperature equals cached state. Skipping.',
-        targetTemperature,
-      )
-      callback(null, value)
-      return
-    }
-
-    this.platform.thinqApi
-      .setTemperature(this.getDeviceId()!, targetTemperature)
-      .then(() => {
-        this.cachedState.targetTemperatureCool = targetTemperature
-        callback(null, value)
-      })
-      .catch((error) => {
-        this.platform.log.error(
-          'Failed to set target cool temperature',
-          targetTemperature,
-          error,
-        )
-        callback(error)
-      })
-  }
-
-  handleTargetHeatingThresholdTemperature(
-    value: CharacteristicValue,
-    callback: CharacteristicSetCallback,
-  ) {
-    this.platform.log.debug(
-      'Triggered SET Heating Threshold Temperature:',
-      value,
-    )
-    if (!this.platform.thinqApi) {
-      this.platform.log.error('API not initialized yet')
-      return
-    }
-
-    let targetTemperature: number
-    try {
-      targetTemperature = Number(value)
-    } catch (error) {
-      this.platform.log.error(
-        'Could not parse heat temperature value',
-        value,
-        error.toString(),
-      )
-      callback(error)
-      return
-    }
-
-    if (
-      Math.abs(
-        targetTemperature - Number(this.cachedState.targetTemperatureHeat),
-      ) < 0.4
-    ) {
-      // The air conditioner will make a sound every time this API is called.
-      // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
-      this.platform.log.debug(
-        'Target heat termperature equals cached state. Skipping.',
-        targetTemperature,
-      )
-      callback(null, value)
-      return
-    }
-
-    this.platform.thinqApi
-      .setTemperature(this.getDeviceId()!, targetTemperature)
-      .then(() => {
-        this.cachedState.targetTemperatureHeat = targetTemperature
-        callback(null, value)
-      })
-      .catch((error) => {
-        this.platform.log.error(
-          'Failed to set target heat temperature',
-          targetTemperature,
-          error,
-        )
         callback(error)
       })
   }
