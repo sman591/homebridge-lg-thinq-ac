@@ -2,14 +2,8 @@ import type { Service, PlatformAccessory } from 'homebridge'
 
 import { HomebridgeLgThinqPlatform } from './platform'
 import { GetDashboardResponse } from './thinq/apiTypes'
-import ActiveCharacteristic from './characteristic/activeCharacteristic'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
-import SwingModeCharacteristic from './characteristic/swingModeCharacteristic'
-import RotationSpeedCharacteristic from './characteristic/rotationSpeedCharacteristic'
-import CoolingThresholdTemperatureCharacteristic from './characteristic/coolingThresholdTemperatureCharacteristic'
-import HeatingThresholdTemperatureCharacteristic from './characteristic/heatingThresholdTemperatureCharacteristic'
-import TargetHeaterCoolerStateCharacteristic from './characteristic/targetHeaterCoolerStateCharacteristic'
-import CurrentTemperatureCharacteristic from './characteristic/currentTemperatureCharacteristic'
+import getCharacteristicsForModel from './getCharacteristicsForModel'
 
 type Unpacked<T> = T extends (infer U)[] ? U : T
 
@@ -35,6 +29,8 @@ export class LgAirConditionerPlatformAccessory {
     private readonly platform: HomebridgeLgThinqPlatform,
     private readonly accessory: PlatformAccessory,
   ) {
+    const model = this.getDevice()?.modelName || 'Not available'
+
     // set accessory information
     this.accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -42,10 +38,7 @@ export class LgAirConditionerPlatformAccessory {
         this.platform.Characteristic.Manufacturer,
         'LG Electronics',
       )
-      .setCharacteristic(
-        this.platform.Characteristic.Model,
-        this.getDevice()?.modelName || 'Not available',
-      )
+      .setCharacteristic(this.platform.Characteristic.Model, model)
       .setCharacteristic(
         this.platform.Characteristic.Name,
         this.getDevice()?.alias || 'Not available',
@@ -65,31 +58,13 @@ export class LgAirConditionerPlatformAccessory {
     // see https://developers.homebridge.io/#/service/Lightbulb
 
     const deviceId = this.getDeviceId()!
-    this.characteristics = [
-      new ActiveCharacteristic(this.platform, this.service, deviceId),
-      new SwingModeCharacteristic(this.platform, this.service, deviceId),
-      new RotationSpeedCharacteristic(this.platform, this.service, deviceId),
-      new CoolingThresholdTemperatureCharacteristic(
-        this.platform,
-        this.service,
-        deviceId,
-      ),
-      new HeatingThresholdTemperatureCharacteristic(
-        this.platform,
-        this.service,
-        deviceId,
-      ),
-      new TargetHeaterCoolerStateCharacteristic(
-        this.platform,
-        this.service,
-        deviceId,
-      ),
-      new CurrentTemperatureCharacteristic(
-        this.platform,
-        this.service,
-        deviceId,
-      ),
-    ]
+    this.characteristics = getCharacteristicsForModel(
+      model,
+      this.platform,
+      this.service,
+      deviceId,
+      this.platform.log,
+    )
 
     // // create handlers for required characteristics
     this.updateCharacteristics()
