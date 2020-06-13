@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **LG Air Conditioner Model**
-Please provide your model here.
+Please provide your A/C model here. If the unit successfully paired to Homekit, please also include the "Model" listed in the accessory's settings.
 
 **Describe the bug**
 A clear and concise description of what the bug is.
