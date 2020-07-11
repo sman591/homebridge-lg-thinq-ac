@@ -35,7 +35,12 @@ export default function getCharacteristicsForModel(
           service,
           deviceId,
         ),
-        new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
+        new TargetHeaterCoolerStateCharacteristic(
+          platform,
+          service,
+          deviceId,
+          true,
+        ),
         new CurrentTemperatureCharacteristic(platform, service, deviceId),
       ]
     // LW8017ERSM
