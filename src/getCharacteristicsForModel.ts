@@ -43,7 +43,8 @@ export default function getCharacteristicsForModel(
         ),
         new CurrentTemperatureCharacteristic(platform, service, deviceId),
       ]
-    // LW8017ERSM
+    // LW8017ERSM -- 3 fan modes
+    // LW1517IVSM -- 4 fan modes
     case 'WIN_056905_WW':
       return [
         new ActiveCharacteristic(platform, service, deviceId),
