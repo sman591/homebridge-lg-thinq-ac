@@ -202,6 +202,9 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       return true
     })
 
+    // Keep a running list of all accessories we register or know were already registered
+    const matchedAccessories: PlatformAccessory[] = []
+
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
       // generate a unique id for the accessory this should be generated from
@@ -219,6 +222,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
         // cached devices we stored in the `configureAccessory` method above
         for (const accessory of matchingAccessories) {
           accessory.context.device = device
+          matchedAccessories.push(accessory)
         }
       } else {
         this.log.info('Registering new accessory:', device.alias)
@@ -241,11 +245,28 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
 
         // push into accessory cache
         this.accessories.push(accessory)
-
-        // it is possible to remove platform accessories at any time using `api.unregisterPlatformAccessories`, eg.:
-        // this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+        matchedAccessories.push(accessory)
       }
     }
+
+    // Unregister accessories that weren't matched from the API response.
+    // This helps clean up devices which:
+    //  - You no longer have connected to your account
+    //  - Were mistakenly registered in an older version of this plugin but aren't actually supported
+    this.accessories.forEach((accessory) => {
+      const didMatchAccessory = matchedAccessories.some(
+        (matchedAccessory) => matchedAccessory.UUID === accessory.UUID,
+      )
+      if (!didMatchAccessory) {
+        this.log.info(
+          'Un-registering unknown accessory:',
+          accessory.displayName,
+        )
+        this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
+          accessory,
+        ])
+      }
+    })
   }
 
   getRefreshIntervalMinutes() {
