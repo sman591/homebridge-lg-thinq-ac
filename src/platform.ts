@@ -182,12 +182,25 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       `Discover found ${dashboardResponse.result.item.length} total devices`,
     )
 
-    const devices = dashboardResponse.result.item.filter(
-      (item) =>
-        typeof item === 'object' &&
-        'deviceType' in item &&
-        item.deviceType === 401,
-    )
+    const devices = dashboardResponse.result.item.filter((item) => {
+      if (typeof item !== 'object') {
+        this.log.debug('Item is not an object, ignoring')
+        return false
+      }
+      if (item.deviceType !== 401) {
+        // Air Conditioners have a 401 device type
+        this.log.debug(`deviceType is ${item.deviceType}, ignoring`)
+        return false
+      }
+      if (item.platformType !== 'thinq2') {
+        this.log.error(
+          `"${item.alias}" (model ${item.modelName}) uses the ${item.platformType} platform, which is not supported. ` +
+            `Please see https://github.com/sman591/homebridge-lg-thinq-ac/issues/4 for updates.`,
+        )
+        return false
+      }
+      return true
+    })
 
     // loop over the discovered devices and register each one if it has not already been registered
     for (const device of devices) {
