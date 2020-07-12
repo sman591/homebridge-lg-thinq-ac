@@ -103,7 +103,8 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     }
     const gatewayUri = await ThinqApi.getGatewayUri(partialThinqConfig)
     const thinqConfig: ThinqConfig = {
-      apiBaseUri: gatewayUri.result.thinq2Uri,
+      apiBaseUriV1: gatewayUri.result.thinq2Uri,
+      apiBaseUriV2: gatewayUri.result.thinq2Uri,
       accessTokenUri: `https://${partialThinqConfig.countryCode.toLowerCase()}.lgeapi.com/oauth/1.0/oauth2/token`,
       redirectUri: `https://kr.m.lgaccount.com/login/iabClose`,
       authorizationUri: `${gatewayUri.result.empSpxUri}/login/signIn`,

@@ -1,6 +1,9 @@
 export type ThinqConfig = {
+  /** @example "https://aic.lgthinq.com:46030/api" */
+  readonly apiBaseUriV1: string
+
   /** @example "https://aic-service.lgthinq.com:46030/v1" */
-  readonly apiBaseUri: string
+  readonly apiBaseUriV2: string
 
   /** @example "https://us.lgeapi.com/oauth/1.0/oauth2/token" */
   readonly accessTokenUri: string

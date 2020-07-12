@@ -37,7 +37,7 @@ export default class ThinqApi {
     const response = await axios({
       method: 'GET',
       responseType: 'json',
-      url: `${this.thinqConfig.apiBaseUri}/service/application/dashboard`,
+      url: `${this.thinqConfig.apiBaseUriV2}/service/application/dashboard`,
       headers: this.generateHeaders(),
     })
     return response.data as GetDashboardResponse
@@ -47,7 +47,7 @@ export default class ThinqApi {
     const response = await axios({
       method: 'GET',
       responseType: 'json',
-      url: `${this.thinqConfig.apiBaseUri}/service/devices/${deviceId}`,
+      url: `${this.thinqConfig.apiBaseUriV2}/service/devices/${deviceId}`,
       headers: this.generateHeaders(),
     })
     return response.data as GetDeviceResponse
@@ -57,7 +57,7 @@ export default class ThinqApi {
     const response = await axios({
       method: 'POST',
       responseType: 'json',
-      url: `${this.thinqConfig.apiBaseUri}/service/devices/${deviceId}/control`,
+      url: `${this.thinqConfig.apiBaseUriV2}/service/devices/${deviceId}/control`,
       headers: this.generateHeaders(),
       data: {
         ctrlKey: 'allEventEnable',
@@ -78,7 +78,7 @@ export default class ThinqApi {
     const response = await axios({
       method: 'POST',
       responseType: 'json',
-      url: `${this.thinqConfig.apiBaseUri}/service/devices/${deviceId}/control-sync`,
+      url: `${this.thinqConfig.apiBaseUriV2}/service/devices/${deviceId}/control-sync`,
       headers: this.generateHeaders(),
       data: {
         dataKey,
