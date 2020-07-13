@@ -1,9 +1,10 @@
 import type { Service, PlatformAccessory } from 'homebridge'
 
 import { HomebridgeLgThinqPlatform } from './platform'
-import { GetDashboardResponse } from './thinq/apiTypes'
+import { GetDashboardResponse, GetDeviceResponse } from './thinq/apiTypes'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
 import getCharacteristicsForModel from './getCharacteristicsForModel'
+import { TranslationCharacteristics } from './thinq/thinq1translation'
 
 type Unpacked<T> = T extends (infer U)[] ? U : T
 
@@ -25,6 +26,10 @@ export class LgAirConditionerPlatformAccessory {
     return this.getDevice()?.deviceId
   }
 
+  getThinqPlatformType() {
+    return this.getDevice()?.platformType
+  }
+
   constructor(
     private readonly platform: HomebridgeLgThinqPlatform,
     private readonly accessory: PlatformAccessory,
@@ -42,6 +47,10 @@ export class LgAirConditionerPlatformAccessory {
       .setCharacteristic(
         this.platform.Characteristic.Name,
         this.getDevice()?.alias || 'Not available',
+      )
+      .setCharacteristic(
+        this.platform.Characteristic.SerialNumber,
+        this.getDevice()?.platformType || 'Not available',
       )
 
     // get the LightBulb service if it exists, otherwise create a new LightBulb service
@@ -91,16 +100,47 @@ export class LgAirConditionerPlatformAccessory {
 
     try {
       this.platform.log.debug('Getting device status', this.getDeviceId())
-      const device = await this.platform.thinqApi.getDevice(this.getDeviceId()!)
-      this.platform.log.debug('device response', device)
-      this.platform.log.debug(
-        'device response.result.snapshot',
-        device.result.snapshot,
-      )
+      const platform = this.getThinqPlatformType()
+      let snapshot: GetDeviceResponse['result']['snapshot']
+      if (platform === 'thinq2') {
+        // Standard ThinQ 2
+        const device = await this.platform.thinqApi.getDevice(
+          this.getDeviceId()!,
+        )
+        this.platform.log.debug('device response', device)
+        snapshot = device.result.snapshot
+      } else if (platform === 'thinq1') {
+        // Legacy ThinQ 1 support
+        const device = await this.platform.thinqApi.getDeviceV1(
+          this.getDeviceId()!,
+          '',
+        )
+        this.platform.log.debug('device response (thinq1)', device)
+        // Dynamically translate the ThinQ 1 response to ThinQ 2
+        snapshot = {} as GetDeviceResponse['result']['snapshot']
+        Object.entries(TranslationCharacteristics).forEach(
+          ([thinq2key, thinq1key]) => {
+            const typedKey = thinq2key as keyof typeof TranslationCharacteristics
+            const value = device[thinq1key]
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (isNaN(value as any)) {
+              // Retain value as-is
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              snapshot[typedKey] = value as any
+            } else {
+              // Convert value to a number
+              snapshot[typedKey] = +value
+            }
+          },
+        )
+      } else {
+        throw new Error('Unsupported platform: ' + platform)
+      }
 
+      this.platform.log.debug('device snapshot', snapshot)
       for (const characteristic of this.characteristics) {
         try {
-          characteristic.handleUpdatedSnapshot(device.result.snapshot)
+          characteristic.handleUpdatedSnapshot(snapshot)
         } catch (error) {
           this.platform.log.error(
             'Error updating characteristic ' + characteristic.constructor.name,

@@ -1,3 +1,5 @@
+export type ThinqPlatformType = 'thinq1' | 'thinq2'
+
 export type GenericResponse = {
   resultCode: string
   result: unknown
@@ -60,7 +62,7 @@ export type GetDeviceResponse = {
       'airState.energy.onCurrent': number
     }
     online: true
-    platformType: string
+    platformType: ThinqPlatformType
     area: number
     regDt: number
     blackboxYn: string
@@ -77,6 +79,91 @@ export type GetDeviceResponse = {
     masterYn: string
     tclcount: number
   }
+}
+
+// Result from POST /api/rti/rtiControl, base64decode(response.lgedmRoot.workList.returnData)
+export type GetThinQ1Result = {
+  Operation: string
+  OpMode: string
+  WindStrength: string
+  TempUnit: string
+  TempCur: string
+  TempCfg: string
+  GroupType: string
+  SleepTime: string
+  OnTime: string
+  OffTime: string
+  RacAddFunc: string
+  ExtraOp: string
+  DiagCode: string
+  TimeBsOn: string
+  TimeBsOff: string
+  AirClean: string
+  AutoDry: string
+  PowerSave: string
+  WDirVStep: string
+  WDirHStep: string
+  TempLimitMax: string
+  TempLimitMin: string
+  DuctZoneType: string
+  ZoneControl: string
+  DRED: string
+  SensorPM1: string
+  SensorPM2: string
+  SensorPM10: string
+  AirPolution: string
+  HumidityCfg: string
+  WaterTempCoolMin: string
+  WaterTempCoolMax: string
+  WaterTempHeatMin: string
+  WaterTempHeatMax: string
+  HotWaterTempMin: string
+  HotWaterTempMax: string
+  SensorHumidity: string
+  TotalAirPolution: string
+  SensorMon: string
+  CleanDry: string
+  ProductStatus: string
+  AirMonitoring: string
+  Humidification: string
+  AirFast: string
+  AirRemoval: string
+  AirUVDisinfection: string
+  WatertankLight: string
+  SignalLighting: string
+  WDirUpDown: string
+  WDirLeftRight: string
+  WSwirl: string
+  Jet: string
+  LowHeating: string
+  CirculateStrength: string
+  CirculateDir: string
+  AntiBugs: string
+  IceValley: string
+  Humsave: string
+  WaterTempCur: string
+  HotWaterTempCur: string
+  HotWaterTempCfg: string
+  HotWaterMode: string
+  HotWater: string
+  AWHPTempCfgSwitch: string
+  AirTempCoolMin: string
+  AirTempCoolMax: string
+  AirTempHeatMin: string
+  AirTempHeatMax: string
+  WaterInTempCur: string
+  AWHPWATempControlSta: string
+  DisplayControl: string
+  SmartCare: string
+  TwoSetCoolTemp: string
+  TwoSetHeatTemp: string
+  TwoSetCoolUSL: string
+  TwoSetCoolLSL: string
+  TwoSetHeatUSL: string
+  TwoSetHeatLSL: string
+  TwoSetACOState: string
+  TwoSetModeDeadband: string
+  TwoSetState: string
 }
 
 export type GetDashboardResponse = {
@@ -128,7 +215,7 @@ export type GetDashboardResponse = {
         | GetDeviceResponse['result']['snapshot']
         | Record<string, unknown> // could be a different product
       online: true
-      platformType: string
+      platformType: ThinqPlatformType
       area: number
       regDt: number
       blackboxYn: string
