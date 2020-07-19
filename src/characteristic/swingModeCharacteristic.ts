@@ -1,5 +1,6 @@
 import type { Service, Characteristic } from 'homebridge'
 
+import type { ThinqPlatformType } from '../thinq/apiTypes'
 import { HomebridgeLgThinqPlatform } from '../platform'
 import AbstractCharacteristic from './abstractCharacteristic'
 
@@ -18,11 +19,13 @@ export default class SwingModeCharacteristic extends AbstractCharacteristic<
     platform: HomebridgeLgThinqPlatform,
     service: Service,
     deviceId: string,
+    thinqPlatform: ThinqPlatformType,
   ) {
     super(
       platform,
       service,
       deviceId,
+      thinqPlatform,
       platform.Characteristic.SwingMode,
       'Set',
       'airState.wDir.vStep',

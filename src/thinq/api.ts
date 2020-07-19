@@ -143,7 +143,6 @@ export default class ThinqApi {
     deviceId: string,
     workId: string,
     command: 'Set' | 'Operation',
-    dataKey: string,
     dataValue: string | Record<string, unknown>,
   ) {
     const response = await axios({

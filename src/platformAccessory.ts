@@ -73,9 +73,10 @@ export class LgAirConditionerPlatformAccessory {
       this.service,
       deviceId,
       this.platform.log,
+      this.getThinqPlatformType() || 'thinq2',
     )
 
-    // // create handlers for required characteristics
+    // create handlers for required characteristics
     this.updateCharacteristics()
     const refreshInterval = this.platform.getRefreshIntervalMinutes()
     this.platform.log.info(

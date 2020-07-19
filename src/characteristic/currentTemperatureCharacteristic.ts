@@ -1,5 +1,6 @@
 import type { Service, Characteristic } from 'homebridge'
 
+import type { ThinqPlatformType } from '../thinq/apiTypes'
 import { HomebridgeLgThinqPlatform } from '../platform'
 import AbstractCharacteristic from './abstractCharacteristic'
 
@@ -16,11 +17,13 @@ export default class CurrentTemperatureCharacteristic extends AbstractCharacteri
     platform: HomebridgeLgThinqPlatform,
     service: Service,
     deviceId: string,
+    thinqPlatform: ThinqPlatformType,
   ) {
     super(
       platform,
       service,
       deviceId,
+      thinqPlatform,
       platform.Characteristic.CurrentTemperature,
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore This won't be used for a read-only characteristic

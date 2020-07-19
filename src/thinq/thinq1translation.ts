@@ -7,3 +7,15 @@ export const TranslationCharacteristics = {
   'airState.operation': 'Operation',
   'airState.wDir.vStep': 'WDirVStep',
 } as const
+
+export function translateCommandValue(
+  thinq1key: typeof TranslationCharacteristics[keyof typeof TranslationCharacteristics],
+  value: string | number,
+): string | Record<string, unknown> {
+  if (thinq1key === 'Operation') {
+    return value ? 'Start' : 'Stop'
+  }
+  return {
+    [thinq1key]: value,
+  }
+}

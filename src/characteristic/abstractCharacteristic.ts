@@ -10,7 +10,11 @@ import type {
 } from 'homebridge'
 
 import { HomebridgeLgThinqPlatform } from '../platform'
-import type { GetDeviceResponse } from '../thinq/apiTypes'
+import type { GetDeviceResponse, ThinqPlatformType } from '../thinq/apiTypes'
+import {
+  TranslationCharacteristics,
+  translateCommandValue,
+} from '../thinq/thinq1translation'
 
 export default abstract class AbstractCharacteristic<
   State extends CharacteristicValue,
@@ -22,6 +26,7 @@ export default abstract class AbstractCharacteristic<
   private platform: HomebridgeLgThinqPlatform
   private service: Service
   private deviceId: string
+  private thinqPlatform: ThinqPlatformType
   private cachedState?: State
   characteristic: Characteristic /** Comes from this.platform.Characteristic.____ */
   private apiCommand: 'Set' | 'Operation'
@@ -35,6 +40,7 @@ export default abstract class AbstractCharacteristic<
     platform: HomebridgeLgThinqPlatform,
     service: Service,
     deviceId: string,
+    thinqPlatform: ThinqPlatformType,
     characteristic: Characteristic,
     apiCommand: 'Set' | 'Operation',
     apiDataKey: keyof GetDeviceResponse['result']['snapshot'],
@@ -42,6 +48,7 @@ export default abstract class AbstractCharacteristic<
     this.platform = platform
     this.service = service
     this.deviceId = deviceId
+    this.thinqPlatform = thinqPlatform
     this.characteristic = characteristic
     this.apiCommand = apiCommand
     this.apiDataKey = apiDataKey
@@ -102,16 +109,46 @@ export default abstract class AbstractCharacteristic<
 
     const apiValue = this.getApiValueFromState(targetState)
 
-    this.thinqApi
-      .sendCommand(this.deviceId, this.apiCommand, this.apiDataKey, apiValue)
-      .then(() => {
-        this.cachedState = targetState
-        callback(null, targetState)
-      })
-      .catch((error) => {
-        this.logError('Failed to set state', targetState, error.toString())
-        callback(error)
-      })
+    if (this.thinqPlatform === 'thinq2') {
+      // Default ThinQ 2 support
+      this.thinqApi
+        .sendCommand(this.deviceId, this.apiCommand, this.apiDataKey, apiValue)
+        .then(() => {
+          this.cachedState = targetState
+          callback(null, targetState)
+        })
+        .catch((error) => {
+          this.logError('Failed to set state', targetState, error.toString())
+          callback(error)
+        })
+    } else if (this.thinqPlatform === 'thinq1') {
+      // Legacy ThinQ 1 support
+      const supportedThinq2key = this
+        .apiDataKey as keyof typeof TranslationCharacteristics
+      const thinq1key = TranslationCharacteristics[supportedThinq2key]
+      const thinq1value = translateCommandValue(thinq1key, apiValue)
+      if (thinq1key === 'Operation') {
+        this.thinqApi
+          .sendCommandV1(
+            this.deviceId,
+            'workId', // TODO
+            this.apiCommand,
+            thinq1value,
+          )
+          .then(() => {
+            this.cachedState = targetState
+            callback(null, targetState)
+          })
+          .catch((error) => {
+            this.logError(
+              'Failed to set state (thinq1)',
+              targetState,
+              error.toString(),
+            )
+            callback(error)
+          })
+      }
+    }
   }
 
   /** Handle a "get" command from Homebridge */

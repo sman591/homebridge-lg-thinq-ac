@@ -1,5 +1,6 @@
 import type { Service, Characteristic } from 'homebridge'
 
+import type { ThinqPlatformType } from '../thinq/apiTypes'
 import { HomebridgeLgThinqPlatform } from '../platform'
 import AbstractCharacteristic from './abstractCharacteristic'
 
@@ -21,12 +22,14 @@ export default class RotationSpeedCharacteristic extends AbstractCharacteristic<
     platform: HomebridgeLgThinqPlatform,
     service: Service,
     deviceId: string,
+    thinqPlatform: ThinqPlatformType,
     numSpeeds = 3,
   ) {
     super(
       platform,
       service,
       deviceId,
+      thinqPlatform,
       platform.Characteristic.RotationSpeed,
       'Set',
       'airState.windStrength',

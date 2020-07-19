@@ -1,6 +1,6 @@
 import type { Service, Characteristic } from 'homebridge'
 
-import type { GetDeviceResponse } from '../thinq/apiTypes'
+import type { GetDeviceResponse, ThinqPlatformType } from '../thinq/apiTypes'
 import { HomebridgeLgThinqPlatform } from '../platform'
 import AbstractCharacteristic from './abstractCharacteristic'
 
@@ -29,12 +29,14 @@ export default class AbstractSplithresholdCharacteristic extends AbstractCharact
     platform: HomebridgeLgThinqPlatform,
     service: Service,
     deviceId: string,
+    thinqPlatform: ThinqPlatformType,
     mode: Mode,
   ) {
     super(
       platform,
       service,
       deviceId,
+      thinqPlatform,
       mode === 'cool'
         ? platform.Characteristic.CoolingThresholdTemperature
         : platform.Characteristic.HeatingThresholdTemperature,
