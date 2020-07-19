@@ -92,6 +92,12 @@
           }
         ],
         "required": false
+      },
+      "enable_experimental_thinq1": {
+        "title": "(experimental) Enable legacy ThinQ 1 translation",
+        "description": "Support for legacy ThinQ 1 devices is in development and not stable. Use at your own risk. Follow https://github.com/sman591/homebridge-lg-thinq-ac/issues/4 for updates.",
+        "type": "boolean",
+        "default": false
       }
     }
   }

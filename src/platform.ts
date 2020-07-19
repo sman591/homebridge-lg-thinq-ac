@@ -193,7 +193,10 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
         this.log.debug(`deviceType is ${item.deviceType}, ignoring`)
         return false
       }
-      if (item.platformType !== 'thinq2') {
+      if (
+        item.platformType !== 'thinq2' &&
+        !this.config.enable_experimental_thinq1
+      ) {
         this.log.error(
           `"${item.alias}" (model ${item.modelName}) uses the ${item.platformType} platform, which is not supported. ` +
             `Please see https://github.com/sman591/homebridge-lg-thinq-ac/issues/4 for updates.`,
