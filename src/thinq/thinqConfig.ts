@@ -16,9 +16,12 @@ export type ThinqConfig = {
 
   /** @example "en-US" */
   readonly languageCode: string
+
+  /** @example "false" */
+  readonly useEcoMode: boolean
 }
 
 export type PartialThinqConfig = Pick<
   ThinqConfig,
-  'countryCode' | 'languageCode'
+  'countryCode' | 'languageCode' | 'useEcoMode'
 >

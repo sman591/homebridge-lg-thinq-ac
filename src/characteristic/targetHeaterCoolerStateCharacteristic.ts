@@ -1,6 +1,9 @@
-import type { Service, Characteristic } from 'homebridge'
+import type { Service, Characteristic, CharacteristicChange } from 'homebridge'
+import { GetDeviceResponse } from '../thinq/apiTypes'
 
 import { HomebridgeLgThinqPlatform } from '../platform'
+import type { LgAirConditionerPlatformAccessory } from '../platformAccessory'
+
 import AbstractCharacteristic from './abstractCharacteristic'
 
 type State =
@@ -8,7 +11,7 @@ type State =
   | typeof Characteristic.TargetHeaterCoolerState.HEAT
   | typeof Characteristic.TargetHeaterCoolerState.AUTO
 
-type ApiValue = 0 | 1 | 2 | 4
+type ApiValue = 0 | 1 | 2 | 4 | 8
 
 export default class TargetHeaterCoolerStateCharacteristic extends AbstractCharacteristic<
   State,
@@ -16,22 +19,24 @@ export default class TargetHeaterCoolerStateCharacteristic extends AbstractChara
   typeof Characteristic.TargetHeaterCoolerState
 > {
   deviceSupportsHeat: boolean
+  useEcoMode: boolean
 
   constructor(
     platform: HomebridgeLgThinqPlatform,
     service: Service,
-    deviceId: string,
+    device: LgAirConditionerPlatformAccessory,
     deviceSupportsHeat = false,
   ) {
     super(
       platform,
       service,
-      deviceId,
+      device,
       platform.Characteristic.TargetHeaterCoolerState,
       'Set',
       'airState.opMode',
     )
     this.deviceSupportsHeat = deviceSupportsHeat
+    this.useEcoMode = platform.config.use_eco_mode
 
     if (this.deviceSupportsHeat) {
       this.logError(
@@ -41,9 +46,33 @@ export default class TargetHeaterCoolerStateCharacteristic extends AbstractChara
     }
   }
 
+  handleUpdatedSnapshot(snapshot: GetDeviceResponse['result']['snapshot']) {
+    super.handleUpdatedSnapshot(snapshot)
+
+    // this sets upon initial load--event handlers will keep this set correctly after that. 2 = auto
+    if (snapshot['airState.opMode'] === 2) {
+      this.device.lockTemperature = true
+    }
+  }
+
+  handleChange(v: CharacteristicChange) {
+    if (v.newValue === this.characteristic.AUTO) {
+      this.device.lockTemperature = true
+    } else {
+      this.device.lockTemperature = false
+    }
+
+    // refresh UI each time the mode changes since the temperature can change when the mode is switched
+    this.device.updateCharacteristics(
+      v.newValue === this.characteristic.AUTO ? true : false,
+      this.platform.Characteristic.TargetHeaterCoolerState.UUID,
+    )
+  }
+
   getStateFromApiValue(apiValue: ApiValue): State {
     if (this.deviceSupportsHeat) {
       switch (apiValue) {
+        case 8:
         case 0:
           return this.characteristic.COOL
         case 4:
@@ -55,6 +84,7 @@ export default class TargetHeaterCoolerStateCharacteristic extends AbstractChara
       }
     } else {
       switch (apiValue) {
+        case 8:
         case 0:
           return this.characteristic.COOL
         case 1:
@@ -71,7 +101,7 @@ export default class TargetHeaterCoolerStateCharacteristic extends AbstractChara
     if (this.deviceSupportsHeat) {
       switch (state) {
         case this.characteristic.COOL:
-          return 0
+          return this.useEcoMode === true ? 8 : 0
         case this.characteristic.HEAT:
           return 4
         case this.characteristic.AUTO:
@@ -82,7 +112,7 @@ export default class TargetHeaterCoolerStateCharacteristic extends AbstractChara
     } else {
       switch (state) {
         case this.characteristic.COOL:
-          return 0
+          return this.useEcoMode === true ? 8 : 0
         case this.characteristic.HEAT:
           return 1
         case this.characteristic.AUTO:

@@ -49,6 +49,11 @@
         "type": "string",
         "required": false
       },
+      "use_eco_mode": {
+        "title": "Use EcoMode (when available)",
+        "type": "boolean",
+        "required": false
+      },
       "refresh_interval": {
         "title": "Refresh interval (requires Homebridge restart)",
         "type": "number",

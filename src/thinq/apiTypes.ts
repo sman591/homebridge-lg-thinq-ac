@@ -124,7 +124,7 @@ export type GetDashboardResponse = {
       langPackProductTypeVer: number
       langPackProductTypeUri: string
       deviceState: string
-      snapshot: GetDeviceResponse['result']['snapshot'] | {} // could be a different product
+      snapshot: GetDeviceResponse['result']['snapshot'] | unknown // could be a different product
       online: true
       platformType: string
       area: number
@@ -153,6 +153,23 @@ export type GetDashboardResponse = {
       tclcount: number
     }>
     group: []
+  }
+}
+
+export type GetModelInfoResponse = {
+  Value: {
+    'support.airState.opMode': {
+      value_mapping: Record<string, string>
+    }
+    'support.airState.windStrength': {
+      value_mapping: Record<string, number>
+    }
+    TempCelToFah: {
+      value_mapping: Record<string, number>
+    }
+    TempFahToCel: {
+      value_mapping: Record<string, number>
+    }
   }
 }
 
