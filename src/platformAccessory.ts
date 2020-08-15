@@ -20,8 +20,9 @@ export class LgAirConditionerPlatformAccessory {
   private service: Service
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private characteristics: Array<AbstractCharacteristic<any, any, any>>
+  public lockTemperature = false
 
-  getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
+  getDevice(): Unpacked<GetDashboardResponse['result']['item']> {
     return this.accessory.context.device
   }
 
