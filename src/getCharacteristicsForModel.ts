@@ -10,7 +10,7 @@ import CoolingThresholdTemperatureCharacteristic from './characteristic/coolingT
 import HeatingThresholdTemperatureCharacteristic from './characteristic/heatingThresholdTemperatureCharacteristic'
 import TargetHeaterCoolerStateCharacteristic from './characteristic/targetHeaterCoolerStateCharacteristic'
 import CurrentTemperatureCharacteristic from './characteristic/currentTemperatureCharacteristic'
-import FilterChangeCharacteristic from './characteristic/FilterChangeCharacteristic'
+import FilterChangeCharacteristic from './characteristic/filterChangeCharacteristic'
 
 export default function getCharacteristicsForModel(
   platform: HomebridgeLgThinqPlatform,
