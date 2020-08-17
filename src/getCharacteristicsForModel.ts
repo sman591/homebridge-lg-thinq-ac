@@ -65,7 +65,13 @@ export default function getCharacteristicsForModel(
           service,
           device,
         ),
-        new TargetHeaterCoolerStateCharacteristic(platform, service, device),
+        new TargetHeaterCoolerStateCharacteristic(
+          platform,
+          service,
+          device,
+          false,
+          platform.config.use_eco_mode,
+        ),
       ]
 
     // LP1419IVSM
@@ -93,7 +99,13 @@ export default function getCharacteristicsForModel(
           service,
           device,
         ),
-        new TargetHeaterCoolerStateCharacteristic(platform, service, device),
+        new TargetHeaterCoolerStateCharacteristic(
+          platform,
+          service,
+          device,
+          false,
+          false, // no eco mode
+        ),
         new SwingModeCharacteristic(platform, service, device),
       ]
   }

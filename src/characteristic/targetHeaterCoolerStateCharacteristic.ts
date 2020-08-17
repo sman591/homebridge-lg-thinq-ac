@@ -26,6 +26,7 @@ export default class TargetHeaterCoolerStateCharacteristic extends AbstractChara
     service: Service,
     device: LgAirConditionerPlatformAccessory,
     deviceSupportsHeat = false,
+    useEcoMode = false,
   ) {
     super(
       platform,
@@ -36,7 +37,7 @@ export default class TargetHeaterCoolerStateCharacteristic extends AbstractChara
       'airState.opMode',
     )
     this.deviceSupportsHeat = deviceSupportsHeat
-    this.useEcoMode = platform.config.use_eco_mode
+    this.useEcoMode = useEcoMode
 
     if (this.deviceSupportsHeat) {
       this.logError(
