@@ -90,6 +90,8 @@ export default abstract class AbstractCharacteristic<
       this.logDebug('HandleSnapshot for ' + this.characteristic.name)
 
       const apiValue = snapshot[this.apiDataKey] as ApiValue
+      this.logDebug('handleUpdatedSnapshot', apiValue)
+
       this.cachedState = this.getStateFromApiValue(apiValue)
       this.service.updateCharacteristic(this.characteristic, this.cachedState)
     } catch (error) {
@@ -104,6 +106,8 @@ export default abstract class AbstractCharacteristic<
 
   /** Handle a "set" command from Homebridge to update this characteristic */
   handleSet?(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    this.logDebug('Triggered SET:', value)
+
     if (!this.thinqApi) {
       this.logError('API not initialized yet')
       return
@@ -137,7 +141,7 @@ export default abstract class AbstractCharacteristic<
         callback(null, targetState)
       })
       .catch((error) => {
-        this.logError('Failed to set state', error.toString())
+        this.logError('Failed to set state', targetState, error.toString())
         callback(error)
 
         // put UI back to where it was before
@@ -195,15 +199,21 @@ export default abstract class AbstractCharacteristic<
       return _celsius
     }
 
-    const LGCelsius = this.roundHalf(_celsius)
-    const LGCelsiusToF = this.device.getModelInfo().Value.TempCelToFah
+    const LGCelsius = this.roundHalf(_celsius)    
+    const LGCelsiusToF:Partial<Record<string, number>> = this.device.getModelInfo().Value.TempCelToFah
       .value_mapping
-    const HKCelsius = this.roundHalf((LGCelsiusToF[LGCelsius] - 32) * (5 / 9))
-
+      const LGFarenheit = LGCelsiusToF[LGCelsius]
+    
+      if(LGFarenheit === undefined) {
+      this.logError('getHomeKitCelsiusForLGAPICelsius input temperature ' + _celsius + ' was not found in LG mapping table')
+      return _celsius
+    }
+    
+    const HKCelsius = this.roundHalf((LGFarenheit - 32) * (5 / 9))
     this.logDebug(
       'getHomeKitCelsiusForLGAPICelsius in=' + _celsius + ' out=' + HKCelsius,
     )
-    return HKCelsius
+    return HKCelsius   
   }
 
   // inverse of the above
@@ -217,7 +227,7 @@ export default abstract class AbstractCharacteristic<
       .value_mapping
 
     for (const LGCelsius in LGCelsiusToF) {
-      const LGFarenheit: number = LGCelsiusToF[LGCelsius]
+      const LGFarenheit = LGCelsiusToF[LGCelsius]
 
       if (LGFarenheit === HKCelsiusInFarenheit) {
         this.logDebug(
@@ -231,6 +241,7 @@ export default abstract class AbstractCharacteristic<
       }
     }
 
-    return -1
+    this.logError("Value " + _celsius + " wasn't found in the LG mapping table.")
+    return _celsius
   }
 }

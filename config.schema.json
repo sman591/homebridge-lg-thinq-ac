@@ -50,7 +50,7 @@
         "required": false
       },
       "use_eco_mode": {
-        "title": "Use EcoMode (when available)",
+        "title": "Use Energy Saver for cooling (when available)",
         "type": "boolean",
         "required": false
       },

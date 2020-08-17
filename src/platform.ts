@@ -139,10 +139,10 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     setInterval(() => this.refreshAuth(), AUTH_REFRESH_INTERVAL)
   }
 
-  private refreshAuth() {
+private async refreshAuth() {
     this.log.debug('refreshAuth()')
     try {
-      this.thinqAuth!.initiateRefreshToken()
+      await this.thinqAuth!.initiateRefreshToken()
       this.updateAndReplaceConfig()
     } catch (error) {
       this.log.error(
@@ -174,6 +174,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     }
 
     const dashboardResponse = await this.thinqApi!.getDashboard()
+    this.log.debug('dashboardResponse', dashboardResponse)
 
     this.log.info(
       `Discover found ${dashboardResponse.result.item.length} total devices`,
@@ -302,6 +303,8 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     const configString = readFileSync(configPath).toString()
     try {
       const config = JSON.parse(configString)
+      // this.log.debug('config', config) DO NOT COMMIT THIS -- it could accidentally leak into GitHub issue reports
+
       const platforms = config.platforms.filter(
         (platform: Record<string, string>) =>
           platform.platform === 'LgThinqAirConditioner',

@@ -159,16 +159,16 @@ export type GetDashboardResponse = {
 export type GetModelInfoResponse = {
   Value: {
     'support.airState.opMode': {
-      value_mapping: Record<string, string>
+      value_mapping: Partial<Record<string, string>>
     }
     'support.airState.windStrength': {
-      value_mapping: Record<string, number>
+      value_mapping: Partial<Record<string, number>>
     }
     TempCelToFah: {
-      value_mapping: Record<string, number>
+      value_mapping: Partial<Record<string, number>>
     }
     TempFahToCel: {
-      value_mapping: Record<string, number>
+      value_mapping: Partial<Record<string, number>>
     }
   }
 }

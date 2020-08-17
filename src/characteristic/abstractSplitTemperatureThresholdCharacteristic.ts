@@ -15,6 +15,9 @@ type ApiValue = number /** temperature in celcius */
 
 type Mode = 'cool' | 'heat'
 
+const TEMPERATURE_MAX_VALUE_C = 30
+const TEMPERATURE_MIN_VALUE_C = 16
+
 /**
  * The air conditioner will report a single API "target temperature", while Homekit
  * supports a target temperature for both heat & cool simultaneously.
@@ -50,8 +53,8 @@ export default class AbstractSplithresholdCharacteristic extends AbstractCharact
       .getCharacteristic(this.characteristic)
       // min/max as defined in product manual
       .setProps({
-        minValue: 16,
-        maxValue: 30,
+        minValue: TEMPERATURE_MIN_VALUE_C,
+        maxValue: TEMPERATURE_MAX_VALUE_C,
         minStep: 0.5,
       })
   }
@@ -73,9 +76,9 @@ export default class AbstractSplithresholdCharacteristic extends AbstractCharact
     if (this.device.lockTemperature) {
       this.logDebug('Returning locked temperature values')
       if (this.mode === 'cool') {
-        return 30
+        return TEMPERATURE_MAX_VALUE_C
       } else {
-        return 16
+        return TEMPERATURE_MIN_VALUE_C
       }
     } else {
       return this.getHomeKitCelsiusForLGAPICelsius(apiValue)

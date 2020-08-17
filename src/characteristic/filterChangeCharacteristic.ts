@@ -34,7 +34,6 @@ export default class FilterChangeCharacteristic extends AbstractCharacteristic<
 
   handleSet = undefined
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getApiValueFromState(state: State): ApiValue {
     return Number(state) === 0 ? 1 : 0
   }
