@@ -199,21 +199,27 @@ export default abstract class AbstractCharacteristic<
       return _celsius
     }
 
-    const LGCelsius = this.roundHalf(_celsius)    
-    const LGCelsiusToF:Partial<Record<string, number>> = this.device.getModelInfo().Value.TempCelToFah
-      .value_mapping
-      const LGFarenheit = LGCelsiusToF[LGCelsius]
-    
-      if(LGFarenheit === undefined) {
-      this.logError('getHomeKitCelsiusForLGAPICelsius input temperature ' + _celsius + ' was not found in LG mapping table')
+    const LGCelsius = this.roundHalf(_celsius)
+    const LGCelsiusToF: Partial<Record<
+      string,
+      number
+    >> = this.device.getModelInfo().Value.TempCelToFah.value_mapping
+    const LGFarenheit = LGCelsiusToF[LGCelsius]
+
+    if (LGFarenheit === undefined) {
+      this.logError(
+        'getHomeKitCelsiusForLGAPICelsius input temperature ' +
+          _celsius +
+          ' was not found in LG mapping table',
+      )
       return _celsius
     }
-    
+
     const HKCelsius = this.roundHalf((LGFarenheit - 32) * (5 / 9))
     this.logDebug(
       'getHomeKitCelsiusForLGAPICelsius in=' + _celsius + ' out=' + HKCelsius,
     )
-    return HKCelsius   
+    return HKCelsius
   }
 
   // inverse of the above
@@ -241,7 +247,9 @@ export default abstract class AbstractCharacteristic<
       }
     }
 
-    this.logError("Value " + _celsius + " wasn't found in the LG mapping table.")
+    this.logError(
+      'Value ' + _celsius + " wasn't found in the LG mapping table.",
+    )
     return _celsius
   }
 }

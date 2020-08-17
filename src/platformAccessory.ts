@@ -102,9 +102,8 @@ export class LgAirConditionerPlatformAccessory {
     try {
       let device = this.getDevice().snapshot
       if (!fromCache && this.platform.thinqApi) {
-        device = (
-          await this.platform.thinqApi.getDevice(this.getDeviceId()!)
-        ).result.snapshot
+        device = (await this.platform.thinqApi.getDevice(this.getDeviceId()!))
+          .result.snapshot
       }
 
       for (const characteristic of this.characteristics) {

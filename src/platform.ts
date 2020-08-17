@@ -139,7 +139,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     setInterval(() => this.refreshAuth(), AUTH_REFRESH_INTERVAL)
   }
 
-private async refreshAuth() {
+  private async refreshAuth() {
     this.log.debug('refreshAuth()')
     try {
       await this.thinqAuth!.initiateRefreshToken()
