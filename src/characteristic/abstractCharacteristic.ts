@@ -101,7 +101,7 @@ export default abstract class AbstractCharacteristic<
 
   /** Handle a "change" command from Homebridge to update this characteristic */
   handleChange?(value: CharacteristicChange) {
-    this.logDebug('Triggered CHANGE:', value.newValue)
+    this.logDebug('Triggered CHANGE ignored! Consider implementing for this characteristic. newValue:', value.newValue)
   }
 
   /** Handle a "set" command from Homebridge to update this characteristic */
@@ -145,7 +145,7 @@ export default abstract class AbstractCharacteristic<
         callback(error)
 
         // put UI back to where it was before
-        this.device.updateCharacteristics(true)
+        callback(error, this.cachedState)
       })
   }
 

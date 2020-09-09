@@ -22,7 +22,7 @@ export class LgAirConditionerPlatformAccessory {
   private characteristics: Array<AbstractCharacteristic<any, any, any>>
   public lockTemperature = false
 
-  getDevice(): Unpacked<GetDashboardResponse['result']['item']> {
+  getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
     return this.accessory.context.device
   }
 
@@ -100,10 +100,14 @@ export class LgAirConditionerPlatformAccessory {
     }
 
     try {
-      let device = this.getDevice().snapshot
+      let snapshot = this.getDevice()!.snapshot as Unpacked<
+        GetDeviceResponse['result']['snapshot']
+      >
       if (!fromCache && this.platform.thinqApi) {
-        device = (await this.platform.thinqApi.getDevice(this.getDeviceId()!))
-          .result.snapshot
+        const response = await this.platform.thinqApi.getDevice(
+          this.getDeviceId()!,
+        )
+        snapshot = response.result.snapshot
       }
 
       for (const characteristic of this.characteristics) {

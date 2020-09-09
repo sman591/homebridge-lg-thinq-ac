@@ -227,10 +227,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
           accessory.context.device = device
           accessory.context.modelInfo = modelInfo
 
-          new LgAirConditionerPlatformAccessory(
-            this,
-            accessory,
-          ).updateCharacteristics()
+          new LgAirConditionerPlatformAccessory(this, accessory)
 
           matchedAccessories.push(accessory)
         }
@@ -248,10 +245,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
 
         // create the accessory handler
         // this is imported from `platformAccessory.ts`
-        new LgAirConditionerPlatformAccessory(
-          this,
-          accessory,
-        ).updateCharacteristics()
+        new LgAirConditionerPlatformAccessory(this, accessory)
 
         // link the accessory to your platform
         this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [
@@ -304,7 +298,6 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     try {
       const config = JSON.parse(configString)
       // this.log.debug('config', config) DO NOT COMMIT THIS -- it could accidentally leak into GitHub issue reports
-
       const platforms = config.platforms.filter(
         (platform: Record<string, string>) =>
           platform.platform === 'LgThinqAirConditioner',
