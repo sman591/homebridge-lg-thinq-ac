@@ -19,7 +19,7 @@ export default function getCharacteristicsForModel(
   log: Logger,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Array<AbstractCharacteristic<any, any, any>> {
-  const model = device.getDevice().modelName
+  const model = device.getDevice()!.modelName
 
   switch (model) {
     case 'RAC_056905_WW':
