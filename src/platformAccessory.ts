@@ -117,7 +117,7 @@ export class LgAirConditionerPlatformAccessory {
 
         try {
           characteristic.handleUpdatedSnapshot(
-            <Unpacked<GetDeviceResponse['result']['snapshot']>>device,
+            <Unpacked<GetDeviceResponse['result']['snapshot']>>snapshot,
           )
         } catch (error) {
           this.platform.log.error(
