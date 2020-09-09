@@ -101,7 +101,10 @@ export default abstract class AbstractCharacteristic<
 
   /** Handle a "change" command from Homebridge to update this characteristic */
   handleChange?(value: CharacteristicChange) {
-    this.logDebug('Triggered CHANGE ignored! Consider implementing for this characteristic. newValue:', value.newValue)
+    this.logDebug(
+      'Triggered CHANGE ignored! Consider implementing for this characteristic. newValue:',
+      value.newValue,
+    )
   }
 
   /** Handle a "set" command from Homebridge to update this characteristic */
@@ -171,7 +174,11 @@ export default abstract class AbstractCharacteristic<
   }
 
   deviceUsesFahrenheit(): boolean {
-    return this.device.getDevice().countryCode.startsWith('US')
+    if (this.device.getDevice()) {
+      return this.device.getDevice()!.countryCode.startsWith('US')
+    } else {
+      return false
+    }
   }
 
   roundHalf(r: number): number {
