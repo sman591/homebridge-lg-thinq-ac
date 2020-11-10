@@ -148,7 +148,7 @@ export default abstract class AbstractCharacteristic<
         callback(error)
 
         // put UI back to where it was before
-        callback(error, this.cachedState)
+        callback(error)
       })
   }
 

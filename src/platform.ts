@@ -117,7 +117,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     const redirectedUrl = this.config.auth_redirected_url as unknown
     if (this.thinqAuth?.getIsLoggedIn()) {
       this.log.info('Already logged into ThinQ')
-      this.refreshAuth()
+      await this.refreshAuth()
     } else if (typeof redirectedUrl === 'string' && redirectedUrl !== '') {
       this.log.info('Initiating auth with provided redirect URL')
       try {

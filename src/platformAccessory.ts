@@ -20,7 +20,6 @@ export class LgAirConditionerPlatformAccessory {
   private service: Service
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private characteristics: Array<AbstractCharacteristic<any, any, any>>
-  public lockTemperature = false
 
   getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
     return this.accessory.context.device
@@ -90,11 +89,8 @@ export class LgAirConditionerPlatformAccessory {
     )
   }
 
-  async updateCharacteristics(
-    fromCache = false,
-    skipUUID: string | null = null,
-  ) {
-    if (!fromCache && !this.platform.thinqApi?.getIsLoggedIn()) {
+  async updateCharacteristics() {
+    if (!this.platform.thinqApi?.getIsLoggedIn()) {
       this.platform.log.debug('Not logged in; skipping updateCharacteristics()')
       return
     }
@@ -103,7 +99,7 @@ export class LgAirConditionerPlatformAccessory {
       let snapshot = this.getDevice()!.snapshot as Unpacked<
         GetDeviceResponse['result']['snapshot']
       >
-      if (!fromCache && this.platform.thinqApi) {
+      if (this.platform.thinqApi) {
         const response = await this.platform.thinqApi.getDevice(
           this.getDeviceId()!,
         )
@@ -111,10 +107,6 @@ export class LgAirConditionerPlatformAccessory {
       }
 
       for (const characteristic of this.characteristics) {
-        if (skipUUID !== null && characteristic.getUUID() === skipUUID) {
-          continue
-        }
-
         try {
           characteristic.handleUpdatedSnapshot(
             <Unpacked<GetDeviceResponse['result']['snapshot']>>snapshot,

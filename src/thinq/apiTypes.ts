@@ -124,7 +124,7 @@ export type GetDashboardResponse = {
       langPackProductTypeVer: number
       langPackProductTypeUri: string
       deviceState: string
-      snapshot: GetDeviceResponse['result']['snapshot'] | unknown // could be a different product
+      snapshot: GetDeviceResponse['result']['snapshot'] | {} // could be a different product
       online: true
       platformType: string
       area: number

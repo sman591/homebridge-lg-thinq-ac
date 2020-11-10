@@ -49,25 +49,11 @@ export default class TargetHeaterCoolerStateCharacteristic extends AbstractChara
 
   handleUpdatedSnapshot(snapshot: GetDeviceResponse['result']['snapshot']) {
     super.handleUpdatedSnapshot(snapshot)
-
-    // this sets upon initial load--event handlers will keep this set correctly after that. 2 = auto
-    if (snapshot['airState.opMode'] === 2) {
-      this.device.lockTemperature = true
-    }
   }
 
   handleChange(v: CharacteristicChange) {
-    if (v.newValue === this.characteristic.AUTO) {
-      this.device.lockTemperature = true
-    } else {
-      this.device.lockTemperature = false
-    }
-
     // refresh UI each time the mode changes since the temperature can change when the mode is switched
-    this.device.updateCharacteristics(
-      v.newValue === this.characteristic.AUTO ? true : false,
-      this.platform.Characteristic.TargetHeaterCoolerState.UUID,
-    )
+    this.device.updateCharacteristics()
   }
 
   getStateFromApiValue(apiValue: ApiValue): State {

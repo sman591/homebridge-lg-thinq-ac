@@ -60,29 +60,13 @@ export default class AbstractSplithresholdCharacteristic extends AbstractCharact
   }
 
   handleSet?(value: CharacteristicValue, callback: CharacteristicSetCallback) {
-    if (this.device.lockTemperature) {
-      // updating from cache when we're locked puts things back to where they were, essentially preventing edits
-      this.device.updateCharacteristics(true)
-    } else {
-      if (super.handleSet) {
-        super.handleSet(value, callback)
-      }
+    if (super.handleSet) {
+      super.handleSet(value, callback)
     }
   }
 
   getStateFromApiValue(apiValue: ApiValue): State {
-    // if we're "locked", i.e. in auto mode, show the full range of temperature to
-    // show the user that we're not heating/cooling to any set point
-    if (this.device.lockTemperature) {
-      this.logDebug('Returning locked temperature values')
-      if (this.mode === 'cool') {
-        return TEMPERATURE_MAX_VALUE_C
-      } else {
-        return TEMPERATURE_MIN_VALUE_C
-      }
-    } else {
-      return this.getHomeKitCelsiusForLGAPICelsius(apiValue)
-    }
+    return this.getHomeKitCelsiusForLGAPICelsius(apiValue)
   }
 
   getApiValueFromState(state: State): ApiValue {
