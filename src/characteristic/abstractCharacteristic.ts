@@ -78,10 +78,6 @@ export default abstract class AbstractCharacteristic<
    */
   abstract getApiValueFromState(state: State): ApiValue
 
-  getUUID(): string {
-    return this.characteristic.UUID
-  }
-
   /** Take in an updated device snapshot */
   handleUpdatedSnapshot(
     snapshot: Unpacked<GetDeviceResponse['result']['snapshot']>,
@@ -145,9 +141,6 @@ export default abstract class AbstractCharacteristic<
       })
       .catch((error) => {
         this.logError('Failed to set state', targetState, error.toString())
-        callback(error)
-
-        // put UI back to where it was before
         callback(error)
       })
   }
