@@ -33,6 +33,7 @@
 
 3. **Add platform to config.json**
     * *I highly recommend using [homebridge-config-ui-x](https://github.com/oznu/homebridge-config-ui-x) to make these changes*
+    * Add the appropriate country & language code for your account
     * Add the following to your config (or merge with the `platforms` array if it exists):
 
     ```
