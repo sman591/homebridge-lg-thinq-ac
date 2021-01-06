@@ -27,7 +27,7 @@
     "homebridge-plugin"
   ],
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "client-oauth2": "^4.3.3",
     "lodash.debounce": "^4.0.8",
     "uuid": "^8.3.0"
