@@ -5,6 +5,7 @@ import {
   GenericResponse,
   GetDashboardResponse,
   GetGatewayUriResponse,
+  GetModelInfoResponse,
   ApiHeaders,
 } from './apiTypes'
 import ThinqAuth from './auth'
@@ -41,6 +42,17 @@ export default class ThinqApi {
       headers: this.generateHeaders(),
     })
     return response.data as GetDashboardResponse
+  }
+
+  async getDeviceModelInfo(url: string) {
+    const response = await axios({
+      method: 'GET',
+      responseType: 'json',
+      url: url,
+      headers: this.generateHeaders(),
+    })
+
+    return response.data as GetModelInfoResponse
   }
 
   async getDevice(deviceId: string) {

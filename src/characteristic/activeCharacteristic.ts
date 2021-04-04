@@ -1,6 +1,8 @@
 import type { Service, Characteristic } from 'homebridge'
 
 import { HomebridgeLgThinqPlatform } from '../platform'
+import { LgAirConditionerPlatformAccessory } from '../platformAccessory'
+
 import AbstractCharacteristic from './abstractCharacteristic'
 
 type State =
@@ -17,12 +19,12 @@ export default class ActiveCharacteristic extends AbstractCharacteristic<
   constructor(
     platform: HomebridgeLgThinqPlatform,
     service: Service,
-    deviceId: string,
+    device: LgAirConditionerPlatformAccessory,
   ) {
     super(
       platform,
       service,
-      deviceId,
+      device,
       platform.Characteristic.Active,
       'Operation',
       'airState.operation',

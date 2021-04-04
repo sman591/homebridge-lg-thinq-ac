@@ -1,6 +1,6 @@
 import type { Logger, Service } from 'homebridge'
-
 import type { HomebridgeLgThinqPlatform } from './platform'
+import type { LgAirConditionerPlatformAccessory } from './platformAccessory'
 
 import ActiveCharacteristic from './characteristic/activeCharacteristic'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
@@ -10,58 +10,70 @@ import CoolingThresholdTemperatureCharacteristic from './characteristic/coolingT
 import HeatingThresholdTemperatureCharacteristic from './characteristic/heatingThresholdTemperatureCharacteristic'
 import TargetHeaterCoolerStateCharacteristic from './characteristic/targetHeaterCoolerStateCharacteristic'
 import CurrentTemperatureCharacteristic from './characteristic/currentTemperatureCharacteristic'
+import FilterChangeCharacteristic from './characteristic/filterChangeCharacteristic'
 
 export default function getCharacteristicsForModel(
-  model: string,
   platform: HomebridgeLgThinqPlatform,
   service: Service,
-  deviceId: string,
+  device: LgAirConditionerPlatformAccessory,
   log: Logger,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Array<AbstractCharacteristic<any, any, any>> {
+  const model = device.getDevice()!.modelName
+
   switch (model) {
     case 'RAC_056905_WW':
       return [
-        new ActiveCharacteristic(platform, service, deviceId),
-        new SwingModeCharacteristic(platform, service, deviceId),
-        new RotationSpeedCharacteristic(platform, service, deviceId, 4),
+        new ActiveCharacteristic(platform, service, device),
+        new SwingModeCharacteristic(platform, service, device),
+        new RotationSpeedCharacteristic(platform, service, device),
+        new FilterChangeCharacteristic(platform, service, device),
+        new CurrentTemperatureCharacteristic(platform, service, device),
         new CoolingThresholdTemperatureCharacteristic(
           platform,
           service,
-          deviceId,
+          device,
         ),
         new HeatingThresholdTemperatureCharacteristic(
           platform,
           service,
-          deviceId,
+          device,
         ),
         new TargetHeaterCoolerStateCharacteristic(
           platform,
           service,
-          deviceId,
+          device,
           true,
         ),
-        new CurrentTemperatureCharacteristic(platform, service, deviceId),
       ]
+
     // LW8017ERSM -- 3 fan modes
     // LW1517IVSM -- 4 fan modes
     case 'WIN_056905_WW':
       return [
-        new ActiveCharacteristic(platform, service, deviceId),
-        new RotationSpeedCharacteristic(platform, service, deviceId),
+        new ActiveCharacteristic(platform, service, device),
+        new RotationSpeedCharacteristic(platform, service, device),
+        new FilterChangeCharacteristic(platform, service, device),
+        new CurrentTemperatureCharacteristic(platform, service, device),
         new CoolingThresholdTemperatureCharacteristic(
           platform,
           service,
-          deviceId,
+          device,
         ),
         new HeatingThresholdTemperatureCharacteristic(
           platform,
           service,
-          deviceId,
+          device,
         ),
-        new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
-        new CurrentTemperatureCharacteristic(platform, service, deviceId),
+        new TargetHeaterCoolerStateCharacteristic(
+          platform,
+          service,
+          device,
+          false,
+          platform.config.use_eco_mode,
+        ),
       ]
+
     // LP1419IVSM
     case 'POT_056905_WW':
     default:
@@ -71,22 +83,30 @@ export default function getCharacteristicsForModel(
             'request support for your model. Falling back to default "POT_056905_WW" model instead.',
         )
       }
+
       return [
-        new ActiveCharacteristic(platform, service, deviceId),
-        new SwingModeCharacteristic(platform, service, deviceId),
-        new RotationSpeedCharacteristic(platform, service, deviceId),
+        new ActiveCharacteristic(platform, service, device),
+        new RotationSpeedCharacteristic(platform, service, device),
+        new FilterChangeCharacteristic(platform, service, device),
+        new CurrentTemperatureCharacteristic(platform, service, device),
         new CoolingThresholdTemperatureCharacteristic(
           platform,
           service,
-          deviceId,
+          device,
         ),
         new HeatingThresholdTemperatureCharacteristic(
           platform,
           service,
-          deviceId,
+          device,
         ),
-        new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
-        new CurrentTemperatureCharacteristic(platform, service, deviceId),
+        new TargetHeaterCoolerStateCharacteristic(
+          platform,
+          service,
+          device,
+          false,
+          false, // no eco mode
+        ),
+        new SwingModeCharacteristic(platform, service, device),
       ]
   }
 }

@@ -1,4 +1,5 @@
 import type { Service, Characteristic } from 'homebridge'
+import type { LgAirConditionerPlatformAccessory } from '../platformAccessory'
 
 import { HomebridgeLgThinqPlatform } from '../platform'
 import AbstractCharacteristic from './abstractCharacteristic'
@@ -20,13 +21,13 @@ export default class RotationSpeedCharacteristic extends AbstractCharacteristic<
   constructor(
     platform: HomebridgeLgThinqPlatform,
     service: Service,
-    deviceId: string,
+    device: LgAirConditionerPlatformAccessory,
     numSpeeds = 3,
   ) {
     super(
       platform,
       service,
-      deviceId,
+      device,
       platform.Characteristic.RotationSpeed,
       'Set',
       'airState.windStrength',
@@ -38,7 +39,7 @@ export default class RotationSpeedCharacteristic extends AbstractCharacteristic<
       .getCharacteristic(this.characteristic)
       // minStep 0.1 to help avoid accidentally setting state = 0.
       // If Homekit notices a 0 value, it also sends Active = 0 to shut it off.
-      .setProps({ minValue: 0, maxValue, minStep: 0.1 })
+      .setProps({ minValue: 0, maxValue: maxValue, minStep: 0.1 })
   }
 
   getStateFromApiValue(apiValue: ApiValue): State {

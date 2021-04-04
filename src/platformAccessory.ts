@@ -1,7 +1,11 @@
 import type { Service, PlatformAccessory } from 'homebridge'
+import type {
+  GetDeviceResponse,
+  GetDashboardResponse,
+  GetModelInfoResponse,
+} from './thinq/apiTypes'
 
 import { HomebridgeLgThinqPlatform } from './platform'
-import { GetDashboardResponse } from './thinq/apiTypes'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
 import getCharacteristicsForModel from './getCharacteristicsForModel'
 
@@ -25,6 +29,10 @@ export class LgAirConditionerPlatformAccessory {
     return this.getDevice()?.deviceId
   }
 
+  getModelInfo(): GetModelInfoResponse {
+    return this.accessory.context.modelInfo
+  }
+
   constructor(
     private readonly platform: HomebridgeLgThinqPlatform,
     private readonly accessory: PlatformAccessory,
@@ -43,9 +51,11 @@ export class LgAirConditionerPlatformAccessory {
         this.platform.Characteristic.Name,
         this.getDevice()?.alias || 'Not available',
       )
+      .setCharacteristic(
+        this.platform.Characteristic.SerialNumber,
+        'Not available',
+      )
 
-    // get the LightBulb service if it exists, otherwise create a new LightBulb service
-    // you can create multiple services for each accessory
     this.service =
       this.accessory.getService(this.platform.Service.HeaterCooler) ??
       this.accessory.addService(this.platform.Service.HeaterCooler)
@@ -53,20 +63,16 @@ export class LgAirConditionerPlatformAccessory {
     // To avoid "Cannot add a Service with the same UUID another Service without also defining a unique 'subtype' property." error,
     // when creating multiple services of the same type, you need to use the following syntax to specify a name and subtype id:
     // this.accessory.getService('NAME') ?? this.accessory.addService(this.platform.Service.Lightbulb, 'NAME', 'USER_DEFINED_SUBTYPE');
-
     // each service must implement at-minimum the "required characteristics" for the given service type
     // see https://developers.homebridge.io/#/service/Lightbulb
-
-    const deviceId = this.getDeviceId()!
     this.characteristics = getCharacteristicsForModel(
-      model,
       this.platform,
       this.service,
-      deviceId,
+      this,
       this.platform.log,
     )
 
-    // // create handlers for required characteristics
+    // create handlers for required characteristics
     this.updateCharacteristics()
     const refreshInterval = this.platform.getRefreshIntervalMinutes()
     this.platform.log.info(
@@ -90,17 +96,21 @@ export class LgAirConditionerPlatformAccessory {
     }
 
     try {
-      this.platform.log.debug('Getting device status', this.getDeviceId())
-      const device = await this.platform.thinqApi.getDevice(this.getDeviceId()!)
-      this.platform.log.debug('device response', device)
-      this.platform.log.debug(
-        'device response.result.snapshot',
-        device.result.snapshot,
-      )
+      let snapshot = this.getDevice()!.snapshot as Unpacked<
+        GetDeviceResponse['result']['snapshot']
+      >
+      if (this.platform.thinqApi) {
+        const response = await this.platform.thinqApi.getDevice(
+          this.getDeviceId()!,
+        )
+        snapshot = response.result.snapshot
+      }
 
       for (const characteristic of this.characteristics) {
         try {
-          characteristic.handleUpdatedSnapshot(device.result.snapshot)
+          characteristic.handleUpdatedSnapshot(
+            <Unpacked<GetDeviceResponse['result']['snapshot']>>snapshot,
+          )
         } catch (error) {
           this.platform.log.error(
             'Error updating characteristic ' + characteristic.constructor.name,

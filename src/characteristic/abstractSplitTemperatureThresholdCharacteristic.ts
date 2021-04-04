@@ -1,6 +1,11 @@
-import type { Service, Characteristic } from 'homebridge'
+import type {
+  Service,
+  Characteristic,
+  CharacteristicValue,
+  CharacteristicSetCallback,
+} from 'homebridge'
 
-import type { GetDeviceResponse } from '../thinq/apiTypes'
+import { LgAirConditionerPlatformAccessory } from '../platformAccessory'
 import { HomebridgeLgThinqPlatform } from '../platform'
 import AbstractCharacteristic from './abstractCharacteristic'
 
@@ -9,6 +14,9 @@ type State = number /** temperature in celcius */
 type ApiValue = number /** temperature in celcius */
 
 type Mode = 'cool' | 'heat'
+
+const TEMPERATURE_MAX_VALUE_C = 30
+const TEMPERATURE_MIN_VALUE_C = 16
 
 /**
  * The air conditioner will report a single API "target temperature", while Homekit
@@ -22,58 +30,46 @@ export default class AbstractSplithresholdCharacteristic extends AbstractCharact
   typeof Characteristic.CoolingThresholdTemperature
 > {
   mode: Mode
-  localPlatform: HomebridgeLgThinqPlatform
-  localService: Service
 
   constructor(
     platform: HomebridgeLgThinqPlatform,
     service: Service,
-    deviceId: string,
+    device: LgAirConditionerPlatformAccessory,
     mode: Mode,
   ) {
     super(
       platform,
       service,
-      deviceId,
+      device,
       mode === 'cool'
         ? platform.Characteristic.CoolingThresholdTemperature
         : platform.Characteristic.HeatingThresholdTemperature,
       'Set',
       'airState.tempState.target',
     )
+
     this.mode = mode
     service
       .getCharacteristic(this.characteristic)
       // min/max as defined in product manual
-      .setProps({ minValue: 16, maxValue: 30, minStep: 0.5 })
-    // Usually these would be private, but this is a special characteristic
-    // that needs these
-    this.localPlatform = platform
-    this.localService = service
+      .setProps({
+        minValue: TEMPERATURE_MIN_VALUE_C,
+        maxValue: TEMPERATURE_MAX_VALUE_C,
+        minStep: 0.5,
+      })
   }
 
-  // Override default handleUpdatedSnapshot() to ignore based on mode
-  handleUpdatedSnapshot(snapshot: GetDeviceResponse['result']['snapshot']) {
-    const targetState = this.localService.getCharacteristic(
-      this.localPlatform.Characteristic.TargetHeaterCoolerState,
-    ).value
-    const requiredState =
-      this.mode === 'cool'
-        ? this.localPlatform.Characteristic.TargetHeaterCoolerState.COOL
-        : this.localPlatform.Characteristic.TargetHeaterCoolerState.HEAT
-    if (targetState !== requiredState) {
-      this.logDebug(
-        `Target state is not "${this.mode}", ignoring snapshot update`,
-      )
+  handleSet?(value: CharacteristicValue, callback: CharacteristicSetCallback) {
+    if (super.handleSet) {
+      super.handleSet(value, callback)
     }
-    super.handleUpdatedSnapshot(snapshot)
   }
 
   getStateFromApiValue(apiValue: ApiValue): State {
-    return apiValue
+    return this.getHomeKitCelsiusForLGAPICelsius(apiValue)
   }
 
   getApiValueFromState(state: State): ApiValue {
-    return state
+    return this.getLGAPICelsiusForHomeKitCelsius(state)
   }
 }

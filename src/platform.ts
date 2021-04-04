@@ -68,10 +68,6 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
   configureAccessory(accessory: PlatformAccessory) {
     this.log.debug('Restoring accessory from cache:', accessory.displayName)
 
-    // create the accessory handler
-    // this is imported from `platformAccessory.ts`
-    new LgAirConditionerPlatformAccessory(this, accessory)
-
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory)
   }
@@ -86,8 +82,8 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       )
       this.thinqApi = new ThinqApi(thinqConfig, this.thinqAuth)
       await this.inititializeAuth()
-      this.startRefreshTokenInterval()
       this.discoverDevicesWhenReady()
+      this.startRefreshTokenInterval()
     } catch (error) {
       this.log.error('Error initializing platform', error.toString())
       this.log.debug(error)
@@ -100,7 +96,9 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       // may not be guaranteed
       countryCode: this.config.country_code || 'US',
       languageCode: this.config.language_code || 'en-US',
+      useEcoMode: this.config.use_eco_mode || false,
     }
+
     const gatewayUri = await ThinqApi.getGatewayUri(partialThinqConfig)
     const thinqConfig: ThinqConfig = {
       apiBaseUri: gatewayUri.result.thinq2Uri,
@@ -109,6 +107,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       authorizationUri: `${gatewayUri.result.empSpxUri}/login/signIn`,
       countryCode: partialThinqConfig.countryCode,
       languageCode: partialThinqConfig.languageCode,
+      useEcoMode: partialThinqConfig.useEcoMode,
     }
     return thinqConfig
   }
@@ -175,7 +174,6 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     }
 
     const dashboardResponse = await this.thinqApi!.getDashboard()
-
     this.log.debug('dashboardResponse', dashboardResponse)
 
     this.log.info(
@@ -211,6 +209,9 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       // something globally unique, but constant, for example, the device serial
       // number or MAC address
       const uuid = this.api.hap.uuid.generate(device.deviceId)
+      const modelInfo = await this.thinqApi!.getDeviceModelInfo(
+        device.modelJsonUri,
+      )
 
       const matchingAccessories = this.accessories.filter(
         (accessory) => accessory.UUID === uuid,
@@ -218,10 +219,16 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
 
       if (matchingAccessories.length > 0) {
         this.log.info('Existing accessory:', device.alias)
+
         // check that the device has not already been registered by checking the
         // cached devices we stored in the `configureAccessory` method above
         for (const accessory of matchingAccessories) {
+          accessory.context = {}
           accessory.context.device = device
+          accessory.context.modelInfo = modelInfo
+
+          new LgAirConditionerPlatformAccessory(this, accessory)
+
           matchedAccessories.push(accessory)
         }
       } else {
@@ -230,9 +237,11 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
         // create a new accessory
         const accessory = new this.api.platformAccessory(device.alias, uuid)
 
-        // store a copy of the device object in the `accessory.context`
         // the `context` property can be used to store any data about the accessory you may need
+        // store here so these are serialized with accessory when saved to disk
+        accessory.context = {}
         accessory.context.device = device
+        accessory.context.modelInfo = modelInfo
 
         // create the accessory handler
         // this is imported from `platformAccessory.ts`
