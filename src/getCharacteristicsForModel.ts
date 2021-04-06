@@ -21,6 +21,7 @@ export default function getCharacteristicsForModel(
 ): Array<AbstractCharacteristic<any, any, any>> {
   switch (model) {
     case 'RAC_056905_WW':
+    case 'CVT_493401_WW':
       return [
         new ActiveCharacteristic(platform, service, deviceId),
         new SwingModeCharacteristic(platform, service, deviceId),
