@@ -30,6 +30,13 @@ export default class SwingModeCharacteristic extends AbstractCharacteristic<
   }
 
   getStateFromApiValue(apiValue: ApiValue): State {
+    if (apiValue > 0 && apiValue < 10) {
+      this.logError(
+        'Warning: Your A/C unit supports variable swing settings, but this is not supported by Homekit. Ignoring desired swing setting.',
+      )
+      return this.characteristic.SWING_ENABLED
+    }
+
     switch (apiValue) {
       case 0:
         return this.characteristic.SWING_DISABLED

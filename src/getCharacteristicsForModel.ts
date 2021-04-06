@@ -24,6 +24,7 @@ export default function getCharacteristicsForModel(
     case 'CVT_493401_WW':
       return [
         new ActiveCharacteristic(platform, service, deviceId),
+        // TODO: These units (or at least RAC_056905_WW does) support variable-position, not just "all or nothing"
         new SwingModeCharacteristic(platform, service, deviceId),
         new RotationSpeedCharacteristic(platform, service, deviceId, 4),
         new CoolingThresholdTemperatureCharacteristic(
