@@ -1,5 +1,6 @@
 import type { Service, PlatformAccessory } from 'homebridge'
 
+import { PLATFORM_NAME, PLUGIN_NAME } from './settings'
 import { HomebridgeLgThinqPlatform } from './platform'
 import { GetDashboardResponse } from './thinq/apiTypes'
 import AbstractCharacteristic from './characteristic/abstractCharacteristic'
@@ -16,6 +17,8 @@ export class LgAirConditionerPlatformAccessory {
   private service: Service
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private characteristics: Array<AbstractCharacteristic<any, any, any>>
+
+  deregisterAccessory?: () => void = undefined
 
   getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
     return this.accessory.context.device
@@ -88,14 +91,23 @@ export class LgAirConditionerPlatformAccessory {
       this.platform.log.debug('Getting device status', this.getDeviceId())
       const device = await this.platform.thinqApi.getDevice(this.getDeviceId()!)
       this.platform.log.debug('device response', device)
-      this.platform.log.debug(
-        'device response.result.snapshot',
-        device.result.snapshot,
-      )
+      const snapshot = device.result.snapshot
+      this.platform.log.debug('device response.result.snapshot', snapshot)
+
+      if (!snapshot.online) {
+        this.platform.log.info(
+          'Removing offline device from HomeKit. If you need this device again, please restart Homebridge.',
+        )
+        this.platform.api.unregisterPlatformAccessories(
+          PLUGIN_NAME,
+          PLATFORM_NAME,
+          [this.accessory],
+        )
+      }
 
       for (const characteristic of this.characteristics) {
         try {
-          characteristic.handleUpdatedSnapshot(device.result.snapshot)
+          characteristic.handleUpdatedSnapshot(snapshot)
         } catch (error) {
           this.platform.log.error(
             'Error updating characteristic ' + characteristic.constructor.name,
