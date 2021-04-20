@@ -46,10 +46,6 @@ export default abstract class AbstractCharacteristic<
     this.apiCommand = apiCommand
     this.apiDataKey = apiDataKey
 
-    this.service
-      .getCharacteristic(this.characteristic)
-      .on(CharacteristicEventTypes.GET, this.handleGet.bind(this))
-
     if (this.handleSet) {
       // read-only characteristics won't have a handleSet
       this.service
@@ -96,7 +92,7 @@ export default abstract class AbstractCharacteristic<
       // The air conditioner will make a sound every time this API is called.
       // To avoid unnecessary chimes, we'll optimistically skip sending the API call.
       this.logDebug('State equals cached state. Skipping.', targetState)
-      callback(null, targetState)
+      callback(null)
       return
     }
 
@@ -106,17 +102,12 @@ export default abstract class AbstractCharacteristic<
       .sendCommand(this.deviceId, this.apiCommand, this.apiDataKey, apiValue)
       .then(() => {
         this.cachedState = targetState
-        callback(null, targetState)
+        callback(null)
       })
       .catch((error) => {
         this.logError('Failed to set state', targetState, error.toString())
         callback(error)
       })
-  }
-
-  /** Handle a "get" command from Homebridge */
-  handleGet(callback: CharacteristicGetCallback) {
-    callback(null, this.cachedState)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -66,7 +66,7 @@ export class LgAirConditionerPlatformAccessory {
       this.platform.log,
     )
 
-    // // create handlers for required characteristics
+    // create handlers for required characteristics
     this.updateCharacteristics()
     const refreshInterval = this.platform.getRefreshIntervalMinutes()
     this.platform.log.info(
