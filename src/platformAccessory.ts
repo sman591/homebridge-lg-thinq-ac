@@ -44,8 +44,6 @@ export class LgAirConditionerPlatformAccessory {
         this.getDevice()?.alias || 'Not available',
       )
 
-    // get the LightBulb service if it exists, otherwise create a new LightBulb service
-    // you can create multiple services for each accessory
     this.service =
       this.accessory.getService(this.platform.Service.HeaterCooler) ??
       this.accessory.addService(this.platform.Service.HeaterCooler)
@@ -53,9 +51,6 @@ export class LgAirConditionerPlatformAccessory {
     // To avoid "Cannot add a Service with the same UUID another Service without also defining a unique 'subtype' property." error,
     // when creating multiple services of the same type, you need to use the following syntax to specify a name and subtype id:
     // this.accessory.getService('NAME') ?? this.accessory.addService(this.platform.Service.Lightbulb, 'NAME', 'USER_DEFINED_SUBTYPE');
-
-    // each service must implement at-minimum the "required characteristics" for the given service type
-    // see https://developers.homebridge.io/#/service/Lightbulb
 
     const deviceId = this.getDeviceId()!
     this.characteristics = getCharacteristicsForModel(
