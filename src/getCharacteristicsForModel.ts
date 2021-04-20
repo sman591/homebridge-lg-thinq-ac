@@ -10,6 +10,8 @@ import CoolingThresholdTemperatureCharacteristic from './characteristic/coolingT
 import HeatingThresholdTemperatureCharacteristic from './characteristic/heatingThresholdTemperatureCharacteristic'
 import TargetHeaterCoolerStateCharacteristic from './characteristic/targetHeaterCoolerStateCharacteristic'
 import CurrentTemperatureCharacteristic from './characteristic/currentTemperatureCharacteristic'
+import FilterChangeCharacteristic from './characteristic/filterChangeCharacteristic'
+import FilterLifeCharacteristic from './characteristic/filterLifeCharacteristic'
 
 export default function getCharacteristicsForModel(
   model: string,
@@ -44,6 +46,8 @@ export default function getCharacteristicsForModel(
           true,
         ),
         new CurrentTemperatureCharacteristic(platform, service, deviceId),
+        new FilterChangeCharacteristic(platform, service, deviceId),
+        new FilterLifeCharacteristic(platform, service, deviceId),
       ]
     // LW8017ERSM -- 3 fan modes
     // LW1517IVSM -- 4 fan modes
@@ -63,6 +67,8 @@ export default function getCharacteristicsForModel(
         ),
         new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
         new CurrentTemperatureCharacteristic(platform, service, deviceId),
+        new FilterChangeCharacteristic(platform, service, deviceId),
+        new FilterLifeCharacteristic(platform, service, deviceId),
       ]
     // LP1419IVSM
     case 'POT_056905_WW':
@@ -89,6 +95,8 @@ export default function getCharacteristicsForModel(
         ),
         new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
         new CurrentTemperatureCharacteristic(platform, service, deviceId),
+        new FilterChangeCharacteristic(platform, service, deviceId),
+        new FilterLifeCharacteristic(platform, service, deviceId),
       ]
   }
 }
