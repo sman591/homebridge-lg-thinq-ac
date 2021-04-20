@@ -9,6 +9,7 @@ import RotationSpeedCharacteristic from './characteristic/rotationSpeedCharacter
 import CoolingThresholdTemperatureCharacteristic from './characteristic/coolingThresholdTemperatureCharacteristic'
 import HeatingThresholdTemperatureCharacteristic from './characteristic/heatingThresholdTemperatureCharacteristic'
 import TargetHeaterCoolerStateCharacteristic from './characteristic/targetHeaterCoolerStateCharacteristic'
+import CurrentHeaterCoolerStateCharacteristic from './characteristic/currentHeaterCoolerStateCharacteristic'
 import CurrentTemperatureCharacteristic from './characteristic/currentTemperatureCharacteristic'
 import FilterChangeCharacteristic from './characteristic/filterChangeCharacteristic'
 import FilterLifeCharacteristic from './characteristic/filterLifeCharacteristic'
@@ -45,6 +46,12 @@ export default function getCharacteristicsForModel(
           deviceId,
           true,
         ),
+        new CurrentHeaterCoolerStateCharacteristic(
+          platform,
+          service,
+          deviceId,
+          true,
+        ),
         new CurrentTemperatureCharacteristic(platform, service, deviceId),
         new FilterChangeCharacteristic(platform, service, deviceId),
         new FilterLifeCharacteristic(platform, service, deviceId),
@@ -66,6 +73,7 @@ export default function getCharacteristicsForModel(
           deviceId,
         ),
         new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
+        new CurrentHeaterCoolerStateCharacteristic(platform, service, deviceId),
         new CurrentTemperatureCharacteristic(platform, service, deviceId),
         new FilterChangeCharacteristic(platform, service, deviceId),
         new FilterLifeCharacteristic(platform, service, deviceId),
@@ -94,6 +102,7 @@ export default function getCharacteristicsForModel(
           deviceId,
         ),
         new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
+        new CurrentHeaterCoolerStateCharacteristic(platform, service, deviceId),
         new CurrentTemperatureCharacteristic(platform, service, deviceId),
         new FilterChangeCharacteristic(platform, service, deviceId),
         new FilterLifeCharacteristic(platform, service, deviceId),
