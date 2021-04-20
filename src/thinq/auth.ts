@@ -75,7 +75,7 @@ export default class ThinqAuth {
   }
 
   getLoginUri() {
-    return this.auth.code.getUri({
+    const loginUri = this.auth.code.getUri({
       query: {
         country: this.thinqConfig.countryCode,
         langauge: this.thinqConfig.languageCode,
@@ -84,6 +84,10 @@ export default class ThinqAuth {
         show_thirdparty_login: 'GGL,AMZ,FBK',
       },
     })
+    return loginUri.replace(
+      /https:\/\/[\w]+\.m.lgaccount.com/,
+      'https://us.m.lgaccount.com',
+    )
   }
 
   async processLoginResult(urlRedirectedTo: string) {
