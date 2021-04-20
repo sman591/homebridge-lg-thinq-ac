@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/camelcase */
 import ClientOAuth2 from 'client-oauth2'
 import { v4 as uuidv4 } from 'uuid'
 import querystring from 'querystring'
@@ -118,13 +117,14 @@ export default class ThinqAuth {
       grant_type: 'refresh_token',
       refresh_token: this.token.refreshToken,
     }
-    try {
-      this.token = await this.token.refresh({
-        headers: this.lgeOauthHeaders(mockedBody),
-      })
-    } catch (error) {
-      this.log.error('Failed to refresh token', error)
-    }
+    this.token = await this.token.refresh({
+      headers: this.lgeOauthHeaders(mockedBody),
+    })
+  }
+
+  /** Force-clear the stored token information. Useful for clearing known-bad credentials. */
+  clearStoredToken() {
+    this.token = undefined
   }
 
   private lgeOauthHeaders(alphaSortedBodyParams: Record<string, string>) {

@@ -146,10 +146,24 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       await this.thinqAuth!.initiateRefreshToken()
       this.updateAndReplaceConfig()
     } catch (error) {
-      this.log.error(
-        'Failed to refresh token during interval',
-        error.toString(),
-      )
+      if (
+        error instanceof Object &&
+        error.body instanceof Object &&
+        error.body.error instanceof Object &&
+        error.body.error.code === 'LG.OAUTH.EC.4001'
+      ) {
+        this.log.error(
+          'Login credentials have expired!\n\n' +
+            'Please re-configure the plugin:\n' +
+            '  1. Login again\n' +
+            '  2. Update the "redirected URL" in the config\n' +
+            '  3. Restart Homebridge\n',
+        )
+        this.thinqAuth?.clearStoredToken()
+        this.updateAndReplaceConfig()
+      } else {
+        this.log.error('Failed to refresh token', error.toString())
+      }
     }
   }
 
