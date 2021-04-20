@@ -68,10 +68,6 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
   configureAccessory(accessory: PlatformAccessory) {
     this.log.debug('Restoring accessory from cache:', accessory.displayName)
 
-    // create the accessory handler
-    // this is imported from `platformAccessory.ts`
-    new LgAirConditionerPlatformAccessory(this, accessory)
-
     // add the restored accessory to the accessories cache so we can track if it has already been registered
     this.accessories.push(accessory)
   }
@@ -237,6 +233,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
         for (const accessory of matchingAccessories) {
           accessory.context.device = device
           matchedAccessories.push(accessory)
+          new LgAirConditionerPlatformAccessory(this, accessory)
         }
       } else {
         this.log.info('Registering new accessory:', device.alias)
