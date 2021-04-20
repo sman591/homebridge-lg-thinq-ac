@@ -17,6 +17,8 @@ export class LgAirConditionerPlatformAccessory {
   private service: Service
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private characteristics: Array<AbstractCharacteristic<any, any, any>>
+  private updateCharacteristicsInterval: NodeJS.Timeout
+  private renewMonitoringInterval: NodeJS.Timeout
 
   deregisterAccessory?: () => void = undefined
 
@@ -70,12 +72,12 @@ export class LgAirConditionerPlatformAccessory {
     this.platform.log.info(
       `Starting refresh interval (set to ${refreshInterval} minutes)`,
     )
-    setInterval(
+    this.updateCharacteristicsInterval = setInterval(
       this.updateCharacteristics.bind(this),
       refreshInterval * 60 * 1000,
     )
     this.renewMonitoring()
-    setInterval(
+    this.renewMonitoringInterval = setInterval(
       this.renewMonitoring.bind(this),
       60 * 1000, // every 60 seconds
     )
@@ -98,6 +100,8 @@ export class LgAirConditionerPlatformAccessory {
         this.platform.log.info(
           'Removing offline device from HomeKit. If you need this device again, please restart Homebridge.',
         )
+        clearInterval(this.updateCharacteristicsInterval)
+        clearInterval(this.renewMonitoringInterval)
         this.platform.api.unregisterPlatformAccessories(
           PLUGIN_NAME,
           PLATFORM_NAME,
