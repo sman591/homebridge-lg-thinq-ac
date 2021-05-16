@@ -169,7 +169,18 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     try {
       await this.discoverDevices()
     } catch (error) {
+      const errorString: string = error.toString()
       this.log.error('Error discovering devices', error.toString())
+      if (errorString.includes('status code 400')) {
+        this.log.error(
+          'This can sometimes indicate the LG App has new agreements you must accept. If so:\n' +
+            '  1. Open the native LG App and sign in as usual\n' +
+            '  2. If an agreement pops up, review and accept it if appropriate\n' +
+            '  3. Restart Homebridge\n' +
+            'If there are no agreements to accept, try restarting Homebridge.\n' +
+            "If that still doesn't work, delete the config for this accessory and restart Homebridge to initiate a full reset.",
+        )
+      }
     }
   }
 
