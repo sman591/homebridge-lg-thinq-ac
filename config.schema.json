@@ -92,6 +92,11 @@
           }
         ],
         "required": false
+      },
+      "remove_offline_devices_on_boot": {
+        "title": "Remove offline devices on next reboot?",
+        "type": "boolean",
+        "default": false
       }
     }
   }

@@ -16,6 +16,10 @@ import { ThinqConfig, PartialThinqConfig } from './thinq/thinqConfig'
 
 const AUTH_REFRESH_INTERVAL = 10 * 60 * 1000 // 10 minutes
 
+export type HomebridgeLgThinqPlatformConfig = {
+  remove_offline_devices_on_boot?: boolean
+} & ThinqAuthConfig
+
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
@@ -36,7 +40,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
 
   constructor(
     public readonly log: Logger,
-    public readonly config: PlatformConfig,
+    public readonly config: PlatformConfig & HomebridgeLgThinqPlatformConfig,
     public readonly api: API,
   ) {
     this.didFinishLaunching = new Promise((resolve) => {
@@ -75,11 +79,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
   async initialize() {
     try {
       const thinqConfig = await this.initializeThinqConfig()
-      this.thinqAuth = ThinqAuth.fromConfig(
-        this.log,
-        thinqConfig,
-        this.config as ThinqAuthConfig,
-      )
+      this.thinqAuth = ThinqAuth.fromConfig(this.log, thinqConfig, this.config)
       this.thinqApi = new ThinqApi(thinqConfig, this.thinqAuth)
       await this.inititializeAuth()
       this.startRefreshTokenInterval()
@@ -235,6 +235,10 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
           matchedAccessories.push(accessory)
           new LgAirConditionerPlatformAccessory(this, accessory)
         }
+      } else if (!device.online) {
+        this.log.info(
+          `Accessory "${device.alias}" is offline and will not be added.`,
+        )
       } else {
         this.log.info('Registering new accessory:', device.alias)
 
@@ -257,6 +261,46 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
         // push into accessory cache
         this.accessories.push(accessory)
         matchedAccessories.push(accessory)
+      }
+    }
+
+    // Unregister offline accessories if desired (set by config)
+    if (this.config.remove_offline_devices_on_boot) {
+      this.log.info('Attempting to remove offline devices from HomeKit...')
+
+      // Only remove once when config is enabled
+      this.config.remove_offline_devices_on_boot = false
+      this.updateAndReplaceConfig()
+
+      let wasADeviceRemoved = false
+      this.accessories.forEach((accessory) => {
+        const deviceContext = accessory.context?.device
+        if (deviceContext?.online === false) {
+          this.log.info(
+            `Removing offline device "${accessory.displayName}" from HomeKit. If you need this device again, please restart Homebridge.`,
+          )
+          // @ts-expect-error This is a hack
+          const jsInstance = accessory.jsInstance as
+            | LgAirConditionerPlatformAccessory
+            | undefined
+          if (
+            jsInstance &&
+            jsInstance instanceof LgAirConditionerPlatformAccessory
+          ) {
+            jsInstance?.unregisterAccessory()
+            wasADeviceRemoved = true
+          } else {
+            this.log.warn(
+              `Device "${accessory.displayName}" is offline, but could not be removed. Please file a bug with homebridge-lg-thinq-ac.`,
+            )
+          }
+        }
+      })
+
+      if (!wasADeviceRemoved) {
+        this.log.warn(
+          'remove_offline_devices_on_boot was attempted but no offline devices were found',
+        )
       }
     }
 
@@ -304,9 +348,17 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
         (platform: Record<string, string>) =>
           platform.platform === 'LgThinqAirConditioner',
       )
-      const serializedAuth = this.thinqAuth!.serializeToConfig()
+      const authConfig = this.thinqAuth!.serializeToConfig()
+      const generalConfig = {
+        remove_offline_devices_on_boot:
+          this.config.remove_offline_devices_on_boot || false,
+      }
+      const platformConfig: Required<HomebridgeLgThinqPlatformConfig> = {
+        ...authConfig,
+        ...generalConfig,
+      }
       for (const platform of platforms) {
-        Object.assign(platform, serializedAuth)
+        Object.assign(platform, platformConfig)
       }
       writeFileSync(configPath, JSON.stringify(config))
     } catch (error) {

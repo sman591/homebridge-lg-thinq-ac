@@ -151,14 +151,14 @@ export default class ThinqAuth {
     }
   }
 
-  serializeToConfig(): Record<string, string | undefined> {
+  serializeToConfig(): Required<ThinqAuthConfig> {
     // The "keys" of this object map directly to the configs defined in config.shema.json
     return {
       auth_login_url: this.getLoginUri(),
       auth_login_state: this.authState,
-      auth_access_token: this.accessToken,
-      auth_refresh_token: this.token?.refreshToken,
-      auth_user_number: this.userNumber,
+      auth_access_token: this.accessToken || '',
+      auth_refresh_token: this.token?.refreshToken || '',
+      auth_user_number: this.userNumber || '',
     }
   }
 }

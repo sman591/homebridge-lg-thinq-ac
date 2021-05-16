@@ -20,7 +20,15 @@ export class LgAirConditionerPlatformAccessory {
   private updateCharacteristicsInterval: NodeJS.Timeout
   private renewMonitoringInterval: NodeJS.Timeout
 
-  deregisterAccessory?: () => void = undefined
+  unregisterAccessory() {
+    clearInterval(this.updateCharacteristicsInterval)
+    clearInterval(this.renewMonitoringInterval)
+    this.platform.api.unregisterPlatformAccessories(
+      PLUGIN_NAME,
+      PLATFORM_NAME,
+      [this.accessory],
+    )
+  }
 
   getDevice(): Unpacked<GetDashboardResponse['result']['item']> | undefined {
     return this.accessory.context.device
@@ -81,6 +89,9 @@ export class LgAirConditionerPlatformAccessory {
       this.renewMonitoring.bind(this),
       60 * 1000, // every 60 seconds
     )
+
+    // @ts-expect-error This is a hack
+    this.accessory.jsInstance = this
   }
 
   async updateCharacteristics() {
@@ -95,19 +106,6 @@ export class LgAirConditionerPlatformAccessory {
       this.platform.log.debug('device response', device)
       const snapshot = device.result.snapshot
       this.platform.log.debug('device response.result.snapshot', snapshot)
-
-      if (!snapshot.online) {
-        this.platform.log.info(
-          'Removing offline device from HomeKit. If you need this device again, please restart Homebridge.',
-        )
-        clearInterval(this.updateCharacteristicsInterval)
-        clearInterval(this.renewMonitoringInterval)
-        this.platform.api.unregisterPlatformAccessories(
-          PLUGIN_NAME,
-          PLATFORM_NAME,
-          [this.accessory],
-        )
-      }
 
       for (const characteristic of this.characteristics) {
         try {
