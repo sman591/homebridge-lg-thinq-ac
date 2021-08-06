@@ -1,5 +1,5 @@
 import { readFileSync, writeFileSync } from 'fs'
-import { APIEvent } from 'homebridge'
+import { APIEvent, Service, Characteristic } from 'homebridge'
 import type {
   API,
   DynamicPlatformPlugin,
@@ -26,8 +26,9 @@ export type HomebridgeLgThinqPlatformConfig = {
  * parse the user config and discover/register accessories with Homebridge.
  */
 export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
-  public readonly Service = this.api.hap.Service
-  public readonly Characteristic = this.api.hap.Characteristic
+  public readonly Service: typeof Service = this.api.hap.Service
+  public readonly Characteristic: typeof Characteristic =
+    this.api.hap.Characteristic
 
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = []
