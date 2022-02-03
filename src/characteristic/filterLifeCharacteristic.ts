@@ -36,6 +36,14 @@ export default class FilterLifeCharacteristic extends AbstractCharacteristic<
     const percentUsed = (useTime / maxTime) * 100
     const filterLife = Math.floor(100 - percentUsed)
 
+    if (isNaN(filterLife)) {
+      this.logDebug(
+        'Filter life is not available for this device (NaN). ' +
+          'Follow https://github.com/sman591/homebridge-lg-thinq-ac/issues/94 for an official fix for this.',
+      )
+      return
+    }
+
     super.handleUpdatedSnapshot({
       ...snapshot,
       // @ts-expect-error This characteristic is a hack
@@ -47,6 +55,7 @@ export default class FilterLifeCharacteristic extends AbstractCharacteristic<
     return apiValue
   }
 
+  // this is a read-only characteristic
   handleSet = undefined
 
   getApiValueFromState(state: State): ApiValue {
