@@ -29,6 +29,7 @@ Community members have reported the following models also work: LG PA11WS, LG S4
 1. **Mobile app setup**
     * Set up the air conditioner using the "LG ThinQ" app ([iOS](https://apps.apple.com/us/app/lg-thinq/id993504342) | [Google Play](https://play.google.com/store/apps/details?id=com.lgeha.nuts&hl=en_US))
     * Ensure the air conditioner shows up in the app and responds to controls
+    * Make sure you can sign in **without** "Sign In With Apple", such as a traditional username + password.
 
 2. **Install the homebridge plugin**
     * `sudo npm -g i homebridge-lg-thinq-ac`
