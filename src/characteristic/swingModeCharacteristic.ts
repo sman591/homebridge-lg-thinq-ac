@@ -14,6 +14,8 @@ export default class SwingModeCharacteristic extends AbstractCharacteristic<
   ApiValue,
   typeof Characteristic.SwingMode
 > {
+  private reportedWarningOnce = false
+
   constructor(
     platform: HomebridgeLgThinqPlatform,
     service: Service,
@@ -31,9 +33,12 @@ export default class SwingModeCharacteristic extends AbstractCharacteristic<
 
   getStateFromApiValue(apiValue: ApiValue): State {
     if (apiValue > 0 && apiValue < 10) {
-      this.logError(
-        'Warning: Your A/C unit supports variable swing settings, but this is not supported by Homekit. Ignoring desired swing setting.',
-      )
+      if (!this.reportedWarningOnce) {
+        this.logError(
+          'Warning: Your A/C unit supports variable swing settings, but this is not supported by Homekit. Ignoring desired swing setting.',
+        )
+        this.reportedWarningOnce = true
+      }
       return this.characteristic.SWING_ENABLED
     }
 
