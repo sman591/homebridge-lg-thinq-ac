@@ -102,6 +102,38 @@ export default function getCharacteristicsForModel(
         new FilterChangeCharacteristic(platform, service, deviceId),
         new FilterLifeCharacteristic(platform, service, deviceId),
       ]
+    // UM30R.N10 with PWFMDD200 wifi module
+    case 'DUCT_626301_WW':
+      return [
+        new ActiveCharacteristic(platform, service, deviceId),
+        new SwingModeCharacteristic(platform, service, deviceId),
+        new RotationSpeedCharacteristic(platform, service, deviceId),
+        new CoolingThresholdTemperatureCharacteristic(
+          platform,
+          service,
+          deviceId,
+        ),
+        new HeatingThresholdTemperatureCharacteristic(
+          platform,
+          service,
+          deviceId,
+        ),
+        new TargetHeaterCoolerStateCharacteristic(
+          platform,
+          service,
+          deviceId,
+          true,
+        ),
+        new CurrentHeaterCoolerStateCharacteristic(
+          platform,
+          service,
+          deviceId,
+          true,
+        ),
+        new CurrentTemperatureCharacteristic(platform, service, deviceId),
+        new FilterChangeCharacteristic(platform, service, deviceId),
+        new FilterLifeCharacteristic(platform, service, deviceId),
+      ]
     // LP1419IVSM
     case 'POT_056905_WW':
     default:
