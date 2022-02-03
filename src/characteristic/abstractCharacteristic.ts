@@ -17,7 +17,7 @@ export default abstract class AbstractCharacteristic<
   ApiValue extends string | number,
   Characteristic extends WithUUID<{
     new (): HomebridgeCharacteristic
-  }> /** Comes from this.platform.Characteristic.____ */
+  }> /** Comes from this.platform.Characteristic.____ */,
 > {
   private platform: HomebridgeLgThinqPlatform
   private service: Service
@@ -70,7 +70,7 @@ export default abstract class AbstractCharacteristic<
       this.cachedState = this.getStateFromApiValue(apiValue)
       this.service.updateCharacteristic(this.characteristic, this.cachedState)
     } catch (error) {
-      this.logError('Error parsing state', error.toString())
+      this.logError('Error parsing state', `${error}`)
     }
   }
 
@@ -105,7 +105,7 @@ export default abstract class AbstractCharacteristic<
         callback(null)
       })
       .catch((error) => {
-        this.logError('Failed to set state', targetState, error.toString())
+        this.logError('Failed to set state', targetState, `${error}`)
         callback(error)
       })
   }

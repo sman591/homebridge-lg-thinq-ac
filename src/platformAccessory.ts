@@ -113,14 +113,14 @@ export class LgAirConditionerPlatformAccessory {
         } catch (error) {
           this.platform.log.error(
             'Error updating characteristic ' + characteristic.constructor.name,
-            error.toString(),
+            `${error}`,
           )
         }
       }
 
       this.platform.log.debug('Finished pushing updates to HomeKit')
     } catch (error) {
-      this.platform.log.error('Error during interval update', error.toString())
+      this.platform.log.error('Error during interval update', `${error}`)
     }
   }
 
@@ -133,7 +133,7 @@ export class LgAirConditionerPlatformAccessory {
     try {
       await this.platform.thinqApi.sendAllEventEnable(this.getDeviceId()!)
     } catch (error) {
-      this.platform.log.error('Error renewing monitor', error.toString())
+      this.platform.log.error('Error renewing monitor', `${error}`)
     }
   }
 }

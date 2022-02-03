@@ -86,8 +86,8 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       this.startRefreshTokenInterval()
       this.discoverDevicesWhenReady()
     } catch (error) {
-      this.log.error('Error initializing platform', error.toString())
-      this.log.debug(error)
+      this.log.error('Error initializing platform', `${error}`)
+      this.log.debug('Full error', error)
     }
   }
 
@@ -145,8 +145,11 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     } catch (error) {
       if (
         error instanceof Object &&
+        // @ts-expect-error TS2339 from upgrade to Typescript 4.5, proven to work on-device regardless
         error.body instanceof Object &&
+        // @ts-expect-error TS2339 from upgrade to Typescript 4.5, proven to work on-device regardless
         error.body.error instanceof Object &&
+        // @ts-expect-error TS2339 from upgrade to Typescript 4.5, proven to work on-device regardless
         error.body.error.code === 'LG.OAUTH.EC.4001'
       ) {
         this.log.error(
@@ -159,7 +162,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
         this.thinqAuth?.clearStoredToken()
         this.updateAndReplaceConfig()
       } else {
-        this.log.error('Failed to refresh token', error.toString())
+        this.log.error('Failed to refresh token', `${error}`)
       }
     }
   }
@@ -170,8 +173,8 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
     try {
       await this.discoverDevices()
     } catch (error) {
-      const errorString: string = error.toString()
-      this.log.error('Error discovering devices', error.toString())
+      const errorString = `${error}`
+      this.log.error('Error discovering devices', `${error}`)
       if (errorString.includes('status code 400')) {
         this.log.error(
           'This can sometimes indicate the LG App has new agreements you must accept. If so:\n' +
@@ -374,7 +377,7 @@ export class HomebridgeLgThinqPlatform implements DynamicPlatformPlugin {
       }
       writeFileSync(configPath, JSON.stringify(config))
     } catch (error) {
-      this.log.error('Failed to store updated config', error.toString())
+      this.log.error('Failed to store updated config', `${error}`)
       this.log.debug('Full error:', error)
     }
   }
