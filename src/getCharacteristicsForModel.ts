@@ -78,6 +78,30 @@ export default function getCharacteristicsForModel(
         new FilterChangeCharacteristic(platform, service, deviceId),
         new FilterLifeCharacteristic(platform, service, deviceId),
       ]
+    // FQ17SADWEN
+    case 'PAC_910604_WW':
+      return [
+        new ActiveCharacteristic(platform, service, deviceId),
+        // TODO: This model uses upDown/left/leftRight values which aren't supported yet
+        // new SwingModeCharacteristic(platform, service, deviceId),
+        // TODO: This model has rotation speeds in a range not supported yet, such as `2056`
+        // new RotationSpeedCharacteristic(platform, service, deviceId),
+        new CoolingThresholdTemperatureCharacteristic(
+          platform,
+          service,
+          deviceId,
+        ),
+        new HeatingThresholdTemperatureCharacteristic(
+          platform,
+          service,
+          deviceId,
+        ),
+        new TargetHeaterCoolerStateCharacteristic(platform, service, deviceId),
+        new CurrentHeaterCoolerStateCharacteristic(platform, service, deviceId),
+        new CurrentTemperatureCharacteristic(platform, service, deviceId),
+        new FilterChangeCharacteristic(platform, service, deviceId),
+        new FilterLifeCharacteristic(platform, service, deviceId),
+      ]
     // LP1419IVSM
     case 'POT_056905_WW':
     default:
