@@ -20,7 +20,9 @@
 
 [Homebridge](https://homebridge.io) plugin for LG ThinQ-enabled portable air conditioners.
 
-**WARNING:** This has only been tested with the [LP1419IVSM](https://www.lg.com/us/air-conditioners/lg-LP1419IVSM-portable-air-conditioner) model. This may not work with other models.
+**WARNING:** This has only been fully tested with the [LP1419IVSM](https://www.lg.com/us/air-conditioners/lg-LP1419IVSM-portable-air-conditioner) model. This may not work with all models.
+
+Community members have reported the following models also work: LG PA11WS, LG S4NQ09WA51A.
 
 ## Installation guide
 
