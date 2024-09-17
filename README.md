@@ -5,6 +5,19 @@
 
 </p>
 
+# \*\* No longer in development\*\*
+
+The author of this plugin no longer owns an LG air conditioner. Further contributions will not be accepted, but forks are encouraged.
+
+**Thank you** to all who helped maintain, report bugs, and make this plugin be possible over the past 4 years! It was a very fun side project and learning experience.
+
+If this plugin breaks, you may want to search for other "LG" plugins: https://www.npmjs.com/search?q=keywords%3Ahomebridge-plugin%20lg
+
+
+<hr />
+<hr />
+<hr />
+
 
 # homebridge-lg-thinq-ac
 
